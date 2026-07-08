@@ -1,26 +1,55 @@
 @import "tailwindcss";
 
+/* 카페 무무무 — 따뜻한 커피/크림 팔레트 */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #faf6f0;   /* cream */
+  --surface: #ffffff;
+  --foreground: #2e2420;   /* espresso ink */
+  --muted: #8a7d72;        /* milk-coffee gray */
+  --border: #e7ddd0;
+  --primary: #6f4e37;      /* coffee */
+  --primary-ink: #ffffff;
+  --accent: #b08968;       /* latte */
+  /* 상태 색 */
+  --ok: #3f7d5c;
+  --low: #c0552e;          /* 재고 부족 */
+  --shipping: #b8892b;     /* 배송중 */
+  --inactive: #9a9a9a;     /* 비활성화 */
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-ink: var(--primary-ink);
+  --color-accent: var(--accent);
+  --color-ok: var(--ok);
+  --color-low: var(--low);
+  --color-shipping: var(--shipping);
+  --color-inactive: var(--inactive);
+  --font-sans: var(--font-plex-kr), system-ui, sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #1c1613;
+    --surface: #26201c;
+    --foreground: #f0e8df;
+    --muted: #a99b8d;
+    --border: #3a322c;
+    --primary: #c8a07a;
+    --primary-ink: #1c1613;
+    --accent: #b08968;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  /* iOS 안전영역 대응 (하단 네비) */
+  padding-bottom: env(safe-area-inset-bottom);
 }
