@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowDownToLine,
   ArrowUpFromLine,
@@ -10,6 +10,7 @@ import {
   Download,
   Cloud,
   UserRound,
+  BarChart3,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { getOperator, setOperator } from "@/lib/operator";
@@ -34,6 +35,8 @@ export default function SettingsPage() {
   const [filter, setFilter] = useState<ActionFilter>("전체");
   const [operator, setOp] = useState("");
   const [savedOp, setSavedOp] = useState("");
+  const [assets, setAssets] = useState<{ category: string; value: number }[]>([]);
+  const [totalAsset, setTotalAsset] = useState(0);
 
   useEffect(() => {
     setOp(getOperator());
@@ -44,7 +47,27 @@ export default function SettingsPage() {
       .order("created_at", { ascending: false })
       .limit(200)
       .then(({ data }) => data && setLogs(data as LogRow[]));
+
+    supabase
+      .from("items")
+      .select("category, current_stock, price")
+      .eq("is_active", true)
+      .then(({ data }) => {
+        if (!data) return;
+        const map = new Map<string, number>();
+        let total = 0;
+        for (const i of data) {
+          const v = (i.current_stock as number) * (i.price as number);
+          total += v;
+          const k = (i.category as string) || "미분류";
+          map.set(k, (map.get(k) ?? 0) + v);
+        }
+        setAssets([...map.entries()].map(([category, value]) => ({ category, value })).sort((a, b) => b.value - a.value));
+        setTotalAsset(total);
+      });
   }, []);
+
+  const maxAsset = useMemo(() => assets[0]?.value || 1, [assets]);
 
   const shown = logs.filter((l) => filter === "전체" || l.action_type === filter);
 
@@ -125,6 +148,33 @@ export default function SettingsPage() {
           >
             <Cloud size={15} /> 구글 드라이브 자동 백업 (연결 예정)
           </button>
+        </section>
+
+        {/* 카테고리별 재고 자산 */}
+        <section className="rounded-xl border border-border bg-surface p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="flex items-center gap-1.5 text-sm font-bold text-foreground">
+              <BarChart3 size={16} /> 카테고리별 재고 자산
+            </h2>
+            <span className="text-xs text-muted">총 {Math.round(totalAsset).toLocaleString()}원</span>
+          </div>
+          {assets.length === 0 ? (
+            <p className="text-xs text-muted">데이터가 없습니다.</p>
+          ) : (
+            <ul className="space-y-2">
+              {assets.map(({ category, value }) => (
+                <li key={category}>
+                  <div className="mb-0.5 flex justify-between text-xs">
+                    <span className="text-foreground">{category}</span>
+                    <span className="text-muted">{Math.round(value).toLocaleString()}원</span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-background">
+                    <div className="h-full rounded-full bg-primary" style={{ width: `${(value / maxAsset) * 100}%` }} />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
 
         {/* 이력 조회 */}

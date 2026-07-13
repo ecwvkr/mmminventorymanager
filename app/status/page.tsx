@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { getOperator } from "@/lib/operator";
 import type { Item, ItemStatus } from "@/lib/types";
 import StatusBadge from "@/components/StatusBadge";
+import ItemDetailModal from "@/components/ItemDetailModal";
 
 type Tab = "전체" | "발주";
 type StatusFilter = "전체" | ItemStatus;
@@ -21,6 +22,7 @@ export default function StatusPage() {
   const [sortKey, setSortKey] = useState<SortKey>("이름");
   const [orderQty, setOrderQty] = useState<Record<string, number>>({});
   const [busy, setBusy] = useState<string | null>(null);
+  const [editing, setEditing] = useState<Item | null>(null);
 
   async function load() {
     setLoading(true);
@@ -103,6 +105,7 @@ export default function StatusPage() {
             setStatusFilter={setStatusFilter}
             sortKey={sortKey}
             setSortKey={setSortKey}
+            onSelect={setEditing}
           />
         ) : (
           <OrderView
@@ -116,6 +119,17 @@ export default function StatusPage() {
           />
         )}
       </div>
+
+      {editing && (
+        <ItemDetailModal
+          item={editing}
+          onClose={() => setEditing(null)}
+          onSaved={() => {
+            setEditing(null);
+            load();
+          }}
+        />
+      )}
     </>
   );
 }
@@ -127,12 +141,14 @@ function TableView({
   setStatusFilter,
   sortKey,
   setSortKey,
+  onSelect,
 }: {
   rows: Item[];
   statusFilter: StatusFilter;
   setStatusFilter: (s: StatusFilter) => void;
   sortKey: SortKey;
   setSortKey: (s: SortKey) => void;
+  onSelect: (item: Item) => void;
 }) {
   return (
     <>
@@ -166,21 +182,23 @@ function TableView({
       ) : (
         <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface">
           {rows.map((it) => (
-            <li key={it.id} className="flex items-center gap-3 px-3 py-2.5">
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-foreground">{it.name}</p>
-                <p className="text-xs text-muted">
-                  {it.vendor_name || "거래처 미지정"} · {it.price.toLocaleString()}원
-                </p>
-              </div>
-              <div className="text-right text-xs text-muted">
-                <span className="font-semibold text-foreground">
-                  {it.current_stock}
-                  {it.unit ?? ""}
-                </span>
-                <span className="text-muted"> / 최소 {it.min_required_stock}</span>
-              </div>
-              <StatusBadge status={it.status} />
+            <li key={it.id}>
+              <button onClick={() => onSelect(it)} className="flex w-full items-center gap-3 px-3 py-2.5 text-left transition hover:bg-background/50">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-foreground">{it.name}</p>
+                  <p className="text-xs text-muted">
+                    {it.vendor_name || "거래처 미지정"} · {it.price.toLocaleString()}원
+                  </p>
+                </div>
+                <div className="text-right text-xs text-muted">
+                  <span className="font-semibold text-foreground">
+                    {it.current_stock}
+                    {it.unit ?? ""}
+                  </span>
+                  <span className="text-muted"> / 최소 {it.min_required_stock}</span>
+                </div>
+                <StatusBadge status={it.status} />
+              </button>
             </li>
           ))}
         </ul>
