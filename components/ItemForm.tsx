@@ -16,6 +16,7 @@ export interface ItemPayload {
   current_stock: number;
   unit: string | null;
   capacity: number | null;
+  capacity_unit: string | null;
   price: number;
   min_required_stock: number;
   tags: string[];
@@ -58,6 +59,7 @@ export default function ItemForm({
   const [currentStock, setCurrentStock] = useState(String(initial?.current_stock ?? 0));
   const [unit, setUnit] = useState(initial?.unit ?? "");
   const [capacity, setCapacity] = useState(initial?.capacity != null ? String(initial.capacity) : "");
+  const [capacityUnit, setCapacityUnit] = useState(initial?.capacity_unit ?? "");
   const [price, setPrice] = useState(String(initial?.price ?? 0));
   const [minStock, setMinStock] = useState(String(initial?.min_required_stock ?? 0));
   const [tags, setTags] = useState<string[]>(initial?.tags ?? []);
@@ -112,6 +114,7 @@ export default function ItemForm({
     if (!p || !c) return null;
     return Math.round(p / c);
   })();
+  const unitPriceSuffix = capacityUnit || "단위";
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -125,6 +128,7 @@ export default function ItemForm({
         current_stock: Number(currentStock) || 0,
         unit: unit.trim() || null,
         capacity: capacity ? Number(capacity) : null,
+        capacity_unit: capacityUnit.trim() || null,
         price: Number(price) || 0,
         min_required_stock: Number(minStock) || 0,
         tags,
@@ -176,15 +180,15 @@ export default function ItemForm({
       </Field>
 
       <div className="grid grid-cols-2 gap-3">
-        <Field label="용량"><input type="number" value={capacity} onChange={(e) => setCapacity(e.target.value)} className={inputCls} placeholder="예: 1 (1kg 포장이면 1)" /></Field>
-        <Field label="단위"><input value={unit} onChange={(e) => setUnit(e.target.value)} className={inputCls} placeholder="개 / kg / 병" /></Field>
+        <Field label="용량"><input type="number" value={capacity} onChange={(e) => setCapacity(e.target.value)} className={inputCls} placeholder="예: 1000" /></Field>
+        <Field label="용량 단위"><input value={capacityUnit} onChange={(e) => setCapacityUnit(e.target.value)} className={inputCls} placeholder="g / ml / kg" /></Field>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         <Field label="구매가(원)"><input type="number" value={price} onChange={(e) => setPrice(e.target.value)} className={inputCls} /></Field>
         <Field label="환산가">
           <div className={`${inputCls} flex items-center text-muted`}>
-            {unitPrice !== null ? `${unitPrice.toLocaleString()}원/${unit || "단위"}` : "용량·구매가 입력 시 자동 계산"}
+            {unitPrice !== null ? `${unitPrice.toLocaleString()}원/${unitPriceSuffix}` : "용량·구매가 입력 시 자동 계산"}
           </div>
         </Field>
       </div>
@@ -202,8 +206,9 @@ export default function ItemForm({
 
       <div className="grid grid-cols-2 gap-3">
         <Field label="현재 재고"><input type="number" value={currentStock} onChange={(e) => setCurrentStock(e.target.value)} className={inputCls} /></Field>
-        <Field label="최소 보유 수량"><input type="number" value={minStock} onChange={(e) => setMinStock(e.target.value)} className={inputCls} /></Field>
+        <Field label="단위"><input value={unit} onChange={(e) => setUnit(e.target.value)} className={inputCls} placeholder="개 / 병 / 박스" /></Field>
       </div>
+      <Field label="최소 보유 수량"><input type="number" value={minStock} onChange={(e) => setMinStock(e.target.value)} className={inputCls} /></Field>
 
       {/* 태그 */}
       <Field label="태그">

@@ -10,6 +10,7 @@ export interface Item {
   price: number;
   unit: string | null;
   capacity: number | null;
+  capacity_unit: string | null;
   current_stock: number;
   min_required_stock: number;
   status: ItemStatus;
