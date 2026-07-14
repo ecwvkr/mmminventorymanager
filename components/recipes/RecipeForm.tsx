@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Search } from "lucide-react";
 import type { Item, RecipeWithDetail } from "@/lib/types";
 import { inputCls } from "@/components/ItemForm";
 
@@ -103,23 +103,20 @@ export default function RecipeForm({
         <div className="space-y-2">
           {ingredients.map((row, i) => (
             <div key={i} className="flex items-center gap-2">
-              <select
+              <ItemPicker
+                items={items}
                 value={row.item_id}
-                onChange={(e) => updateIngredient(i, { item_id: e.target.value })}
-                className={`${inputCls} flex-1`}
-              >
-                <option value="">품목 선택</option>
-                {items.map((it) => (
-                  <option key={it.id} value={it.id}>{it.name}</option>
-                ))}
-              </select>
-              <input
-                type="number"
-                value={row.quantity}
-                onChange={(e) => updateIngredient(i, { quantity: e.target.value })}
-                placeholder="수량"
-                className={`${inputCls} w-20 shrink-0`}
+                onChange={(id) => updateIngredient(i, { item_id: id })}
               />
+              <div className="w-20 shrink-0">
+                <input
+                  type="number"
+                  value={row.quantity}
+                  onChange={(e) => updateIngredient(i, { quantity: e.target.value })}
+                  placeholder="수량"
+                  className={inputCls}
+                />
+              </div>
               <button
                 type="button"
                 onClick={() => removeIngredient(i)}
@@ -152,5 +149,61 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <span className="mb-1 block text-xs font-medium text-muted">{label}</span>
       {children}
     </label>
+  );
+}
+
+// 검색해서 고르는 품목 선택 콤보박스. 네이티브 select는 옵션 텍스트가 길면
+// 고정폭 형제 요소(수량 입력)와의 비율이 깨지는 문제가 있어 텍스트 입력 기반으로 대체.
+function ItemPicker({
+  items,
+  value,
+  onChange,
+}: {
+  items: Item[];
+  value: string;
+  onChange: (id: string) => void;
+}) {
+  const selected = items.find((it) => it.id === value);
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+
+  const filtered = items.filter((it) => it.name.toLowerCase().includes(query.toLowerCase()));
+
+  return (
+    <div className="relative min-w-0 flex-[3]">
+      <div className="relative">
+        <Search size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted" />
+        <input
+          value={open ? query : (selected?.name ?? "")}
+          onFocus={() => { setQuery(""); setOpen(true); }}
+          onChange={(e) => setQuery(e.target.value)}
+          onBlur={() => setTimeout(() => setOpen(false), 120)}
+          placeholder="품목 검색"
+          className="w-full rounded-lg border border-border bg-surface py-2 pl-8 pr-3 text-sm text-foreground outline-none placeholder:text-muted focus:border-primary"
+        />
+      </div>
+      {open && (
+        <ul className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-border bg-surface shadow-lg">
+          {filtered.length === 0 ? (
+            <li className="px-3 py-2 text-xs text-muted">검색 결과 없음</li>
+          ) : (
+            filtered.map((it) => (
+              <li key={it.id}>
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => { onChange(it.id); setOpen(false); }}
+                  className={`block w-full px-3 py-2 text-left text-sm hover:bg-background ${
+                    it.id === value ? "bg-primary/10 font-semibold text-primary" : "text-foreground"
+                  }`}
+                >
+                  {it.name}
+                </button>
+              </li>
+            ))
+          )}
+        </ul>
+      )}
+    </div>
   );
 }
