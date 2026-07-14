@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Search, ShoppingCart, X } from "lucide-react";
+import Link from "next/link";
+import { Search, ShoppingCart, X, ChefHat, ScanLine } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { getOperator } from "@/lib/operator";
 import type { Item } from "@/lib/types";
 import ItemCard from "@/components/inventory/ItemCard";
 import StepperModal, { type ChangeType } from "@/components/inventory/StepperModal";
 import CartPanel, { type CartLine } from "@/components/inventory/CartPanel";
+import ScanCartModal from "@/components/inventory/ScanCartModal";
 
 export default function InventoryPage() {
   const [items, setItems] = useState<Item[]>([]);
@@ -18,6 +20,7 @@ export default function InventoryPage() {
   const [cart, setCart] = useState<CartLine[]>([]);
   const [applying, setApplying] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
+  const [scanOpen, setScanOpen] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   async function load() {
@@ -101,19 +104,30 @@ export default function InventoryPage() {
       <header className="sticky top-0 z-30 border-b border-border bg-background/90 px-4 py-3 backdrop-blur">
         <div className="flex items-center justify-between">
           <h1 className="text-lg font-bold text-foreground">재고관리</h1>
-          {/* 모바일 장바구니 열기 */}
-          <button
-            onClick={() => setCartOpen(true)}
-            className="relative rounded-full p-2 text-primary lg:hidden"
-            aria-label="장바구니"
-          >
-            <ShoppingCart size={22} />
-            {cart.length > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-low px-1 text-[10px] font-bold text-white">
-                {cart.length}
-              </span>
-            )}
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setScanOpen(true)}
+              className="flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-foreground"
+            >
+              <ScanLine size={16} /> 스캔
+            </button>
+            <Link href="/recipes" className="flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-foreground">
+              <ChefHat size={16} /> 레시피
+            </Link>
+            {/* 모바일 장바구니 열기 */}
+            <button
+              onClick={() => setCartOpen(true)}
+              className="relative rounded-full p-2 text-primary lg:hidden"
+              aria-label="장바구니"
+            >
+              <ShoppingCart size={22} />
+              {cart.length > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-low px-1 text-[10px] font-bold text-white">
+                  {cart.length}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
         {/* 검색 */}
         <div className="mt-2 flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2">
@@ -200,6 +214,16 @@ export default function InventoryPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* 바코드/QR 스캔 → 장바구니 담기 (입고 시 여러 품목 연속 스캔용) */}
+      {scanOpen && (
+        <ScanCartModal
+          items={items}
+          cartCount={cart.length}
+          onAdd={(line) => setCart((c) => [...c, line])}
+          onClose={() => setScanOpen(false)}
+        />
       )}
     </>
   );

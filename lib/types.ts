@@ -9,6 +9,7 @@ export interface Item {
   category: string | null;
   price: number;
   unit: string | null;
+  capacity: number | null;
   current_stock: number;
   min_required_stock: number;
   status: ItemStatus;
@@ -48,4 +49,30 @@ export interface CartChange {
   item_id: string;
   action_type: "입고" | "출고" | "실사";
   quantity: number;
+}
+
+export interface Recipe {
+  id: string;
+  name: string;
+  output_item_id: string;
+  output_quantity: number;
+  memo: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RecipeIngredient {
+  id: string;
+  recipe_id: string;
+  item_id: string;
+  quantity: number;
+}
+
+// 조인 조회 결과 (레시피 목록/실행/수정 화면 공용)
+export interface RecipeWithDetail extends Recipe {
+  output_item: Pick<Item, "id" | "name" | "unit" | "current_stock"> | null;
+  recipe_ingredients: (RecipeIngredient & {
+    item: Pick<Item, "id" | "name" | "unit" | "current_stock"> | null;
+  })[];
 }

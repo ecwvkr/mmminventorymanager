@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { BrowserMultiFormatReader, type IScannerControls } from "@zxing/browser";
+import { useRef, useState } from "react";
 import { X } from "lucide-react";
+import { useBarcodeScanner } from "@/lib/useBarcodeScanner";
 
-// HTML5 카메라 기반 바코드/QR 스캐너. 스캔 성공 시 텍스트를 onDetect 로 전달.
+// HTML5 카메라 기반 바코드/QR 스캐너 (단발성: 1회 인식 후 자동 종료).
 export default function ScannerModal({
   onDetect,
   onClose,
@@ -15,35 +15,9 @@ export default function ScannerModal({
   const videoRef = useRef<HTMLVideoElement>(null);
   const [err, setErr] = useState<string | null>(null);
 
-  useEffect(() => {
-    const reader = new BrowserMultiFormatReader();
-    let controls: IScannerControls | undefined;
-    let stopped = false;
-
-    reader
-      .decodeFromVideoDevice(undefined, videoRef.current!, (result, _e, ctrl) => {
-        controls = ctrl;
-        if (result && !stopped) {
-          stopped = true;
-          ctrl.stop();
-          onDetect(result.getText());
-        }
-      })
-      .then((c) => {
-        controls = c;
-        if (stopped) c.stop();
-      })
-      .catch(() => setErr("카메라를 열 수 없습니다. 브라우저 권한을 확인하세요."));
-
-    return () => {
-      stopped = true;
-      try {
-        controls?.stop();
-      } catch {
-        /* noop */
-      }
-    };
-  }, [onDetect]);
+  useBarcodeScanner(videoRef, onDetect, {
+    onError: () => setErr("카메라를 열 수 없습니다. 브라우저 권한을 확인하세요."),
+  });
 
   return (
     <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-black/80 p-4" onClick={onClose}>
