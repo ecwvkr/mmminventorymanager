@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { X, Minus, Plus } from "lucide-react";
 import type { Item } from "@/lib/types";
+import { capacityLabel } from "@/lib/format";
 
 export type ChangeType = "입고" | "출고" | "실사";
 
@@ -47,7 +48,7 @@ export default function StepperModal({
       >
         <div className="mb-4 flex items-start justify-between">
           <div>
-            <h2 className="text-base font-bold text-foreground">{item.name}</h2>
+            <h2 className="text-base font-bold text-foreground">{item.name}{capacityLabel(item)}</h2>
             <p className="text-xs text-muted">
               현재 재고 {item.current_stock}
               {item.unit ?? ""} · {item.category ?? "미분류"}

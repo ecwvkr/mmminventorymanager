@@ -11,6 +11,8 @@ import {
   Cloud,
   UserRound,
   BarChart3,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { getOperator, setOperator } from "@/lib/operator";
@@ -21,6 +23,7 @@ type LogRow = InventoryLog & { items: { name: string } | null };
 type ActionFilter = "전체" | ActionType;
 
 const ACTION_FILTERS: ActionFilter[] = ["전체", "입고", "출고", "실사", "상태변경", "등록"];
+const PAGE_SIZE = 20;
 
 const ACTION_ICON: Record<ActionType, React.ReactNode> = {
   "입고": <ArrowDownToLine size={15} className="text-ok" />,
@@ -33,20 +36,29 @@ const ACTION_ICON: Record<ActionType, React.ReactNode> = {
 export default function SettingsPage() {
   const [logs, setLogs] = useState<LogRow[]>([]);
   const [filter, setFilter] = useState<ActionFilter>("전체");
+  const [page, setPage] = useState(1);
+  const [totalLogs, setTotalLogs] = useState(0);
   const [operator, setOp] = useState("");
   const [savedOp, setSavedOp] = useState("");
   const [assets, setAssets] = useState<{ category: string; value: number }[]>([]);
   const [totalAsset, setTotalAsset] = useState(0);
 
   useEffect(() => {
+    let query = supabase
+      .from("inventory_logs")
+      .select("*, items(name)", { count: "exact" })
+      .order("created_at", { ascending: false });
+    if (filter !== "전체") query = query.eq("action_type", filter);
+    const from = (page - 1) * PAGE_SIZE;
+    query.range(from, from + PAGE_SIZE - 1).then(({ data, count }) => {
+      setLogs((data as LogRow[]) ?? []);
+      setTotalLogs(count ?? 0);
+    });
+  }, [filter, page]);
+
+  useEffect(() => {
     setOp(getOperator());
     setSavedOp(getOperator());
-    supabase
-      .from("inventory_logs")
-      .select("*, items(name)")
-      .order("created_at", { ascending: false })
-      .limit(200)
-      .then(({ data }) => data && setLogs(data as LogRow[]));
 
     supabase
       .from("items")
@@ -68,8 +80,7 @@ export default function SettingsPage() {
   }, []);
 
   const maxAsset = useMemo(() => assets[0]?.value || 1, [assets]);
-
-  const shown = logs.filter((l) => filter === "전체" || l.action_type === filter);
+  const totalPages = Math.max(1, Math.ceil(totalLogs / PAGE_SIZE));
 
   function saveOperator() {
     setOperator(operator.trim() || "직원");
@@ -184,7 +195,7 @@ export default function SettingsPage() {
             {ACTION_FILTERS.map((a) => (
               <button
                 key={a}
-                onClick={() => setFilter(a)}
+                onClick={() => { setFilter(a); setPage(1); }}
                 className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition ${
                   filter === a ? "bg-primary text-primary-ink" : "border border-border text-muted"
                 }`}
@@ -194,11 +205,11 @@ export default function SettingsPage() {
             ))}
           </div>
 
-          {shown.length === 0 ? (
+          {logs.length === 0 ? (
             <p className="rounded-xl border border-border bg-surface p-4 text-sm text-muted">이력이 없습니다.</p>
           ) : (
             <ul className="space-y-2">
-              {shown.map((l) => (
+              {logs.map((l) => (
                 <li key={l.id} className="flex items-start gap-3 rounded-xl border border-border bg-surface p-3">
                   <div className="mt-0.5">{ACTION_ICON[l.action_type]}</div>
                   <div className="min-w-0 flex-1">
@@ -220,6 +231,26 @@ export default function SettingsPage() {
                 </li>
               ))}
             </ul>
+          )}
+
+          {totalLogs > 0 && (
+            <div className="mt-3 flex items-center justify-center gap-3">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page <= 1}
+                className="flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-foreground disabled:opacity-40"
+              >
+                <ChevronLeft size={14} /> 이전
+              </button>
+              <span className="text-xs text-muted">{page} / {totalPages} 페이지</span>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages}
+                className="flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-foreground disabled:opacity-40"
+              >
+                다음 <ChevronRight size={14} />
+              </button>
+            </div>
           )}
         </section>
       </div>

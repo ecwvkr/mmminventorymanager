@@ -6,6 +6,7 @@ import { useBarcodeScanner } from "@/lib/useBarcodeScanner";
 import type { Item } from "@/lib/types";
 import type { CartLine } from "./CartPanel";
 import type { ChangeType } from "./StepperModal";
+import { capacityLabel } from "@/lib/format";
 
 const MODES: { t: ChangeType; label: string }[] = [
   { t: "입고", label: "입고 [+]" },
@@ -141,7 +142,7 @@ function ScannerCartView({
         <div className="absolute inset-0 z-20 flex items-end justify-center bg-black/60 sm:items-center" onClick={dismissFound}>
           <div className="w-full max-w-sm rounded-t-2xl bg-surface p-5 pb-8 sm:rounded-2xl sm:pb-5" onClick={(e) => e.stopPropagation()}>
             <p className="text-xs font-semibold text-muted">{mode}</p>
-            <h3 className="mt-0.5 text-base font-bold text-foreground">{found.name}</h3>
+            <h3 className="mt-0.5 text-base font-bold text-foreground">{found.name}{capacityLabel(found)}</h3>
             <p className="text-xs text-muted">현재 재고 {found.current_stock}{found.unit ?? ""}</p>
 
             <div className="mt-4 flex items-center justify-center gap-4">

@@ -7,6 +7,7 @@ import { getOperator } from "@/lib/operator";
 import ItemForm, { type ItemPayload } from "@/components/ItemForm";
 import StatusBadge from "@/components/StatusBadge";
 import type { Item } from "@/lib/types";
+import { capacityLabel } from "@/lib/format";
 
 export default function ItemDetailModal({
   item,
@@ -66,7 +67,7 @@ export default function ItemDetailModal({
       >
         <header className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-border bg-background/95 px-4 py-3 backdrop-blur">
           <div className="flex min-w-0 items-center gap-2">
-            <h2 className="truncate text-base font-bold text-foreground">{item.name}</h2>
+            <h2 className="truncate text-base font-bold text-foreground">{item.name}{capacityLabel(item)}</h2>
             <StatusBadge status={item.status} />
           </div>
           <button onClick={onClose} aria-label="닫기" className="shrink-0 text-muted">

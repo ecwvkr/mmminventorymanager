@@ -6,6 +6,7 @@ import { AlertTriangle, CalendarClock, Truck, BellRing, Star, ChevronRight } fro
 import { supabase } from "@/lib/supabase";
 import type { Item } from "@/lib/types";
 import StatusBadge from "@/components/StatusBadge";
+import { capacityLabel } from "@/lib/format";
 
 function daysUntil(dateStr: string) {
   return Math.floor((new Date(dateStr).getTime() - Date.now()) / 86400000);
@@ -76,7 +77,7 @@ export default function DashboardPage() {
             <ul className="space-y-1.5">
               {periodicAlerts.map((i) => (
                 <li key={i.id} className="flex items-center justify-between text-sm">
-                  <span className="text-foreground">{i.name}</span>
+                  <span className="text-foreground">{i.name}{capacityLabel(i)}</span>
                   <span className="font-semibold text-shipping">발주 {i.periodic_order_quantity ?? "?"}{i.unit ?? ""}</span>
                 </li>
               ))}
@@ -95,7 +96,7 @@ export default function DashboardPage() {
                 const d = daysUntil(i.expiration_date!);
                 return (
                   <li key={i.id} className="flex items-center gap-3 px-3 py-2.5">
-                    <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">{i.name}</span>
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">{i.name}{capacityLabel(i)}</span>
                     <span className="text-xs text-muted">{i.expiration_date}</span>
                     <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${d < 0 ? "bg-low/10 text-low" : "bg-shipping/10 text-shipping"}`}>
                       {d < 0 ? `${-d}일 지남` : d === 0 ? "오늘" : `${d}일 남음`}
@@ -185,7 +186,7 @@ function ShortcutList({
           {items.slice(0, 8).map((i) => (
             <li key={i.id}>
               <Link href={href} className="flex items-center gap-3 px-3 py-2.5">
-                <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">{i.name}</span>
+                <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">{i.name}{capacityLabel(i)}</span>
                 <span className="text-xs text-muted">
                   {i.current_stock}
                   {i.unit ?? ""}

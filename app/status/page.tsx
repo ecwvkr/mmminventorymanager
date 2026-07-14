@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ExternalLink, Phone, PackageCheck, Truck, ChevronDown } from "lucide-react";
+import { ExternalLink, Phone, PackageCheck, Truck, Search } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { getOperator } from "@/lib/operator";
 import type { Item, ItemStatus } from "@/lib/types";
 import StatusBadge from "@/components/StatusBadge";
 import ItemDetailModal from "@/components/ItemDetailModal";
+import Chip from "@/components/Chip";
+import { capacityLabel } from "@/lib/format";
 
 type Tab = "전체" | "발주";
 type StatusFilter = "전체" | ItemStatus;
@@ -20,6 +22,8 @@ export default function StatusPage() {
   const [tab, setTab] = useState<Tab>("전체");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("전체");
   const [sortKey, setSortKey] = useState<SortKey>("이름");
+  const [q, setQ] = useState("");
+  const [catFilter, setCatFilter] = useState<string | null>(null);
   const [orderQty, setOrderQty] = useState<Record<string, number>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [editing, setEditing] = useState<Item | null>(null);
@@ -35,15 +39,24 @@ export default function StatusPage() {
   }, []);
 
   // ── 전체 탭 ──
+  const categories = useMemo(
+    () => Array.from(new Set(items.map((i) => i.category).filter(Boolean))) as string[],
+    [items]
+  );
   const tableRows = useMemo(() => {
-    let rows = items.filter((i) => statusFilter === "전체" || i.status === statusFilter);
+    let rows = items.filter(
+      (i) =>
+        (statusFilter === "전체" || i.status === statusFilter) &&
+        (!catFilter || i.category === catFilter) &&
+        (!q || i.name.toLowerCase().includes(q.toLowerCase()) || i.tags.some((t) => t.includes(q)))
+    );
     rows = [...rows].sort((a, b) => {
       if (sortKey === "재고적은순") return a.current_stock - b.current_stock;
       if (sortKey === "가격높은순") return b.price - a.price;
       return a.name.localeCompare(b.name, "ko");
     });
     return rows;
-  }, [items, statusFilter, sortKey]);
+  }, [items, statusFilter, catFilter, q, sortKey]);
 
   // ── 발주 탭: 재고 부족 → 거래처별 그룹 ──
   const vendorGroups = useMemo(() => {
@@ -106,6 +119,11 @@ export default function StatusPage() {
             sortKey={sortKey}
             setSortKey={setSortKey}
             onSelect={setEditing}
+            q={q}
+            setQ={setQ}
+            categories={categories}
+            catFilter={catFilter}
+            setCatFilter={setCatFilter}
           />
         ) : (
           <OrderView
@@ -142,6 +160,11 @@ function TableView({
   sortKey,
   setSortKey,
   onSelect,
+  q,
+  setQ,
+  categories,
+  catFilter,
+  setCatFilter,
 }: {
   rows: Item[];
   statusFilter: StatusFilter;
@@ -149,9 +172,37 @@ function TableView({
   sortKey: SortKey;
   setSortKey: (s: SortKey) => void;
   onSelect: (item: Item) => void;
+  q: string;
+  setQ: (v: string) => void;
+  categories: string[];
+  catFilter: string | null;
+  setCatFilter: (c: string | null) => void;
 }) {
   return (
     <>
+      {/* 검색 */}
+      <div className="mb-3 flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2">
+        <Search size={16} className="text-muted" />
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="품목명·태그 검색"
+          className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted"
+        />
+      </div>
+
+      {/* 카테고리 필터 */}
+      <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
+        <Chip active={catFilter === null} onClick={() => setCatFilter(null)}>
+          전체
+        </Chip>
+        {categories.map((c) => (
+          <Chip key={c} active={catFilter === c} onClick={() => setCatFilter(c)}>
+            {c}
+          </Chip>
+        ))}
+      </div>
+
       <div className="mb-3 flex items-center justify-between gap-2">
         <div className="flex gap-1.5 overflow-x-auto">
           {STATUS_FILTERS.map((s) => (
@@ -185,7 +236,7 @@ function TableView({
             <li key={it.id}>
               <button onClick={() => onSelect(it)} className="flex w-full items-center gap-3 px-3 py-2.5 text-left transition hover:bg-background/50">
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-foreground">{it.name}</p>
+                  <p className="truncate text-sm font-medium text-foreground">{it.name}{capacityLabel(it)}</p>
                   <p className="text-xs text-muted">
                     {it.vendor_name || "거래처 미지정"} · {it.price.toLocaleString()}원
                   </p>
@@ -258,7 +309,7 @@ function OrderView({
                     {list.map((it) => (
                       <li key={it.id} className="flex items-center gap-2 px-3 py-2.5">
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium text-foreground">{it.name}</p>
+                          <p className="truncate text-sm font-medium text-foreground">{it.name}{capacityLabel(it)}</p>
                           <p className="text-xs text-muted">
                             현재 {it.current_stock}
                             {it.unit ?? ""} / 최소 {it.min_required_stock}
@@ -300,7 +351,7 @@ function OrderView({
             {shipping.map((it) => (
               <li key={it.id} className="flex items-center gap-2 px-3 py-2.5">
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-foreground">{it.name}</p>
+                  <p className="truncate text-sm font-medium text-foreground">{it.name}{capacityLabel(it)}</p>
                   <p className="text-xs text-muted">
                     발주 수량 {it.pending_order_quantity ?? "?"}
                     {it.unit ?? ""} · {it.vendor_name || "거래처 미지정"}

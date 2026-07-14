@@ -1,5 +1,6 @@
 import type { Item } from "@/lib/types";
 import StatusBadge from "@/components/StatusBadge";
+import { capacityLabel } from "@/lib/format";
 
 export default function ItemCard({ item, onClick }: { item: Item; onClick: () => void }) {
   return (
@@ -15,7 +16,7 @@ export default function ItemCard({ item, onClick }: { item: Item; onClick: () =>
           <span className="text-3xl opacity-40">📦</span>
         )}
       </div>
-      <span className="line-clamp-2 text-sm font-semibold text-foreground">{item.name}</span>
+      <span className="line-clamp-2 text-sm font-semibold text-foreground">{item.name}{capacityLabel(item)}</span>
       {item.tags.length > 0 && (
         <div className="mt-1 flex flex-wrap gap-1">
           {item.tags.slice(0, 3).map((t) => (

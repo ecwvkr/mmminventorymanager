@@ -46,6 +46,7 @@ export default function ItemForm({
   onSubmit: (payload: ItemPayload, imageFile: File | null) => void;
 }) {
   const [categories, setCategories] = useState<string[]>([]);
+  const [vendors, setVendors] = useState<string[]>([]);
   const [scanning, setScanning] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -80,6 +81,13 @@ export default function ItemForm({
       .not("category", "is", null)
       .then(({ data }) => {
         if (data) setCategories(Array.from(new Set(data.map((r) => r.category as string))));
+      });
+    supabase
+      .from("items")
+      .select("vendor_name")
+      .not("vendor_name", "is", null)
+      .then(({ data }) => {
+        if (data) setVendors(Array.from(new Set(data.map((r) => r.vendor_name as string))));
       });
   }, []);
 
@@ -181,7 +189,12 @@ export default function ItemForm({
         </Field>
       </div>
 
-      <Field label="거래처명"><input value={vendorName} onChange={(e) => setVendorName(e.target.value)} className={inputCls} placeholder="예: 무무무로스터리" /></Field>
+      <Field label="거래처명">
+        <input list="vendor-list" value={vendorName} onChange={(e) => setVendorName(e.target.value)} className={inputCls} placeholder="기존 선택 또는 새로 입력" />
+        <datalist id="vendor-list">
+          {vendors.map((v) => <option key={v} value={v} />)}
+        </datalist>
+      </Field>
       <div className="grid grid-cols-2 gap-3">
         <Field label="구매처 링크"><input value={orderUrl} onChange={(e) => setOrderUrl(e.target.value)} className={inputCls} placeholder="https://…" /></Field>
         <Field label="연락처"><input value={orderContact} onChange={(e) => setOrderContact(e.target.value)} className={inputCls} placeholder="010-…" /></Field>
