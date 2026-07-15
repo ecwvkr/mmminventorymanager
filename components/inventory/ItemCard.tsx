@@ -1,6 +1,6 @@
 import type { Item } from "@/lib/types";
 import StatusBadge from "@/components/StatusBadge";
-import { capacityLabel } from "@/lib/format";
+import { capacityLabel, formatStock } from "@/lib/format";
 
 export default function ItemCard({ item, onClick }: { item: Item; onClick: () => void }) {
   return (
@@ -25,10 +25,7 @@ export default function ItemCard({ item, onClick }: { item: Item; onClick: () =>
         </div>
       )}
       <div className="mt-2 flex items-center justify-between">
-        <span className="text-xs text-muted">
-          {item.current_stock}
-          {item.unit ?? ""}
-        </span>
+        <span className="text-xs text-muted">{formatStock(item, item.current_stock)}</span>
         <StatusBadge status={item.status} />
       </div>
     </button>

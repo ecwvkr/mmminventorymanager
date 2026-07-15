@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { ScanLine, Plus, X, ImagePlus } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import ScannerModal from "@/components/ScannerModal";
-import type { Item } from "@/lib/types";
+import StockInput from "@/components/StockInput";
+import type { Item, StockDisplayMode } from "@/lib/types";
 
 // items 테이블에 insert/update 할 컬럼 페이로드 (id/status/created/updated 제외)
 export interface ItemPayload {
@@ -19,6 +20,7 @@ export interface ItemPayload {
   capacity_unit: string | null;
   price: number;
   min_required_stock: number;
+  stock_display_mode: StockDisplayMode;
   tags: string[];
   expiration_date: string | null;
   expiration_alert_days: number;
@@ -60,6 +62,7 @@ export default function ItemForm({
   const [unit, setUnit] = useState(initial?.unit ?? "");
   const [capacity, setCapacity] = useState(initial?.capacity != null ? String(initial.capacity) : "");
   const [capacityUnit, setCapacityUnit] = useState(initial?.capacity_unit ?? "");
+  const [displayMode, setDisplayMode] = useState<StockDisplayMode>(initial?.stock_display_mode ?? "개별");
   const [price, setPrice] = useState(String(initial?.price ?? 0));
   const [minStock, setMinStock] = useState(String(initial?.min_required_stock ?? 0));
   const [tags, setTags] = useState<string[]>(initial?.tags ?? []);
@@ -131,6 +134,7 @@ export default function ItemForm({
         capacity_unit: capacityUnit.trim() || null,
         price: Number(price) || 0,
         min_required_stock: Number(minStock) || 0,
+        stock_display_mode: displayMode,
         tags,
         expiration_date: expiration || null,
         expiration_alert_days: Number(alertDays) || 7,
@@ -204,11 +208,48 @@ export default function ItemForm({
         <Field label="연락처"><input value={orderContact} onChange={(e) => setOrderContact(e.target.value)} className={inputCls} placeholder="010-…" /></Field>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <Field label="현재 재고"><input type="number" value={currentStock} onChange={(e) => setCurrentStock(e.target.value)} className={inputCls} /></Field>
-        <Field label="단위"><input value={unit} onChange={(e) => setUnit(e.target.value)} className={inputCls} placeholder="개 / 병 / 박스" /></Field>
-      </div>
-      <Field label="최소 보유 수량"><input type="number" value={minStock} onChange={(e) => setMinStock(e.target.value)} className={inputCls} /></Field>
+      <Field label="단위"><input value={unit} onChange={(e) => setUnit(e.target.value)} className={inputCls} placeholder="개 / 병 / 판 / 박스" /></Field>
+
+      {Number(capacity) > 0 && (
+        <div className="flex items-center justify-between rounded-xl border border-border bg-surface px-3 py-2.5">
+          <span className="text-sm text-foreground">재고 표시 방식</span>
+          <div className="flex gap-1 rounded-lg bg-background p-0.5">
+            {(["묶음", "개별"] as StockDisplayMode[]).map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setDisplayMode(m)}
+                className={`rounded-md px-3 py-1 text-xs font-semibold transition ${
+                  displayMode === m ? "bg-primary text-primary-ink" : "text-muted"
+                }`}
+              >
+                {m}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <Field label="현재 재고">
+        <StockInput
+          capacity={Number(capacity) || null}
+          capacityUnit={capacityUnit || null}
+          bundleUnit={unit || null}
+          mode={displayMode}
+          valueBase={Number(currentStock) || 0}
+          onChange={(v) => setCurrentStock(String(v))}
+        />
+      </Field>
+      <Field label="최소 보유 수량">
+        <StockInput
+          capacity={Number(capacity) || null}
+          capacityUnit={capacityUnit || null}
+          bundleUnit={unit || null}
+          mode={displayMode}
+          valueBase={Number(minStock) || 0}
+          onChange={(v) => setMinStock(String(v))}
+        />
+      </Field>
 
       {/* 태그 */}
       <Field label="태그">
@@ -272,9 +313,19 @@ export default function ItemForm({
           <input type="checkbox" checked={isPeriodic} onChange={(e) => setIsPeriodic(e.target.checked)} className="h-5 w-5 accent-[var(--primary)]" />
         </label>
         {isPeriodic && (
-          <div className="mt-3 grid grid-cols-2 gap-3">
+          <div className="mt-3 space-y-3">
             <Field label="발주 주기(일)"><input type="number" value={interval} onChange={(e) => setIntervalDays(e.target.value)} className={inputCls} placeholder="14" /></Field>
-            <Field label="발주 수량"><input type="number" value={periodicQty} onChange={(e) => setPeriodicQty(e.target.value)} className={inputCls} placeholder="10" /></Field>
+            <Field label="발주 수량">
+              <StockInput
+                capacity={Number(capacity) || null}
+                capacityUnit={capacityUnit || null}
+                bundleUnit={unit || null}
+                mode={displayMode}
+                valueBase={Number(periodicQty) || 0}
+                onChange={(v) => setPeriodicQty(String(v))}
+                size="compact"
+              />
+            </Field>
           </div>
         )}
       </div>

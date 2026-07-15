@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Plus, Trash2, Search } from "lucide-react";
 import type { Item, RecipeWithDetail } from "@/lib/types";
 import { inputCls } from "@/components/ItemForm";
+import { baseUnitLabel } from "@/lib/format";
 
 export interface RecipeIngredientInput {
   item_id: string;
@@ -87,7 +88,13 @@ export default function RecipeForm({
             </select>
           </Field>
           <Field label="기본 산출 수량">
-            <input type="number" value={outputQty} onChange={(e) => setOutputQty(e.target.value)} className={inputCls} />
+            <div className="flex items-center gap-1">
+              <input type="number" value={outputQty} onChange={(e) => setOutputQty(e.target.value)} className={inputCls} />
+              {(() => {
+                const outputItem = items.find((it) => it.id === outputItemId);
+                return outputItem ? <span className="shrink-0 text-xs text-muted">{baseUnitLabel(outputItem)}</span> : null;
+              })()}
+            </div>
           </Field>
         </div>
         <p className="mt-1 text-[11px] text-muted">결과물 품목이 목록에 없다면 재고등록에서 먼저 등록하세요.</p>
@@ -101,7 +108,9 @@ export default function RecipeForm({
           </button>
         </div>
         <div className="space-y-2">
-          {ingredients.map((row, i) => (
+          {ingredients.map((row, i) => {
+            const selectedItem = items.find((it) => it.id === row.item_id);
+            return (
             <div key={i} className="flex items-center gap-2">
               <ItemPicker
                 items={items}
@@ -117,6 +126,7 @@ export default function RecipeForm({
                   className={inputCls}
                 />
               </div>
+              {selectedItem && <span className="shrink-0 text-xs text-muted">{baseUnitLabel(selectedItem)}</span>}
               <button
                 type="button"
                 onClick={() => removeIngredient(i)}
@@ -126,7 +136,8 @@ export default function RecipeForm({
                 <Trash2 size={16} />
               </button>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 

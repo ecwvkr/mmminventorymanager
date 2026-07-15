@@ -4,6 +4,7 @@ import { useState } from "react";
 import { X, TriangleAlert } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { getOperator } from "@/lib/operator";
+import { baseUnitLabel, formatStock } from "@/lib/format";
 import type { RecipeWithDetail } from "@/lib/types";
 
 export default function ExecuteRecipeModal({
@@ -71,7 +72,7 @@ export default function ExecuteRecipeModal({
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-foreground">{ri.item?.name ?? "(삭제된 품목)"}</p>
                   <p className="text-xs text-muted">
-                    현재 {stock}{ri.item?.unit ?? ""}
+                    현재 {ri.item ? formatStock(ri.item, stock) : stock}
                     {over && (
                       <span className="ml-1 inline-flex items-center gap-0.5 text-low">
                         <TriangleAlert size={11} /> 재고 초과
@@ -79,12 +80,15 @@ export default function ExecuteRecipeModal({
                     )}
                   </p>
                 </div>
-                <input
-                  type="number"
-                  value={qtys[ri.item_id]}
-                  onChange={(e) => setQtys((m) => ({ ...m, [ri.item_id]: e.target.value }))}
-                  className="w-20 rounded-lg border border-border bg-surface px-2 py-1.5 text-center text-sm text-foreground"
-                />
+                <div className="flex shrink-0 items-center gap-1">
+                  <input
+                    type="number"
+                    value={qtys[ri.item_id]}
+                    onChange={(e) => setQtys((m) => ({ ...m, [ri.item_id]: e.target.value }))}
+                    className="w-20 rounded-lg border border-border bg-surface px-2 py-1.5 text-center text-sm text-foreground"
+                  />
+                  {ri.item && <span className="text-xs text-muted">{baseUnitLabel(ri.item)}</span>}
+                </div>
               </div>
             );
           })}
@@ -94,14 +98,19 @@ export default function ExecuteRecipeModal({
         <div className="flex items-center gap-2 rounded-lg border border-ok/30 bg-ok/10 px-3 py-2">
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-foreground">{recipe.output_item?.name ?? "(삭제된 품목)"}</p>
-            <p className="text-xs text-muted">현재 {recipe.output_item?.current_stock ?? 0}{recipe.output_item?.unit ?? ""}</p>
+            <p className="text-xs text-muted">
+              현재 {recipe.output_item ? formatStock(recipe.output_item, recipe.output_item.current_stock) : 0}
+            </p>
           </div>
-          <input
-            type="number"
-            value={outputQty}
-            onChange={(e) => setOutputQty(e.target.value)}
-            className="w-20 rounded-lg border border-border bg-surface px-2 py-1.5 text-center text-sm text-foreground"
-          />
+          <div className="flex shrink-0 items-center gap-1">
+            <input
+              type="number"
+              value={outputQty}
+              onChange={(e) => setOutputQty(e.target.value)}
+              className="w-20 rounded-lg border border-border bg-surface px-2 py-1.5 text-center text-sm text-foreground"
+            />
+            {recipe.output_item && <span className="text-xs text-muted">{baseUnitLabel(recipe.output_item)}</span>}
+          </div>
         </div>
 
         {err && <p className="mt-3 rounded-lg bg-low/10 p-2 text-xs text-low">{err}</p>}

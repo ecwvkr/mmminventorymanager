@@ -1,12 +1,13 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { X, Minus, Plus, ScanLine } from "lucide-react";
+import { X, ScanLine } from "lucide-react";
 import { useBarcodeScanner } from "@/lib/useBarcodeScanner";
 import type { Item } from "@/lib/types";
 import type { CartLine } from "./CartPanel";
-import type { ChangeType } from "./StepperModal";
-import { capacityLabel } from "@/lib/format";
+import { type ChangeType, defaultQty } from "./StepperModal";
+import { capacityLabel, formatStock } from "@/lib/format";
+import StockInput from "@/components/StockInput";
 
 const MODES: { t: ChangeType; label: string }[] = [
   { t: "입고", label: "입고 [+]" },
@@ -94,7 +95,7 @@ function ScannerCartView({
     }
     foundRef.current = item;
     setFound(item);
-    setQty(1);
+    setQty(defaultQty(mode, item));
   }
 
   useBarcodeScanner(videoRef, handleDetect, {
@@ -143,31 +144,17 @@ function ScannerCartView({
           <div className="w-full max-w-sm rounded-t-2xl bg-surface p-5 pb-8 sm:rounded-2xl sm:pb-5" onClick={(e) => e.stopPropagation()}>
             <p className="text-xs font-semibold text-muted">{mode}</p>
             <h3 className="mt-0.5 text-base font-bold text-foreground">{found.name}{capacityLabel(found)}</h3>
-            <p className="text-xs text-muted">현재 재고 {found.current_stock}{found.unit ?? ""}</p>
+            <p className="text-xs text-muted">현재 재고 {formatStock(found, found.current_stock)}</p>
 
-            <div className="mt-4 flex items-center justify-center gap-4">
-              <button
-                onClick={() => setQty((n) => Math.max(1, n - 1))}
-                className="flex h-11 w-11 items-center justify-center rounded-full border border-border text-foreground hover:bg-background"
-                aria-label="감소"
-              >
-                <Minus size={20} />
-              </button>
-              <input
-                type="number"
-                inputMode="numeric"
-                min={1}
-                value={qty}
-                onChange={(e) => setQty(Math.max(1, Number(e.target.value) || 1))}
-                className="w-20 rounded-lg border border-border bg-background py-2 text-center text-xl font-bold text-foreground"
+            <div className="mt-4 flex items-center justify-center">
+              <StockInput
+                capacity={found.capacity}
+                capacityUnit={found.capacity_unit}
+                bundleUnit={found.unit}
+                mode={found.stock_display_mode}
+                valueBase={qty}
+                onChange={setQty}
               />
-              <button
-                onClick={() => setQty((n) => n + 1)}
-                className="flex h-11 w-11 items-center justify-center rounded-full border border-border text-foreground hover:bg-background"
-                aria-label="증가"
-              >
-                <Plus size={20} />
-              </button>
             </div>
 
             <button onClick={confirmAdd} className="mt-4 w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-ink">

@@ -2,6 +2,7 @@
 
 export type ItemStatus = "정상" | "재고 부족" | "배송중" | "비활성화";
 export type ActionType = "입고" | "출고" | "실사" | "상태변경" | "등록";
+export type StockDisplayMode = "묶음" | "개별";
 
 export interface Item {
   id: string;
@@ -13,6 +14,7 @@ export interface Item {
   capacity_unit: string | null;
   current_stock: number;
   min_required_stock: number;
+  stock_display_mode: StockDisplayMode;
   status: ItemStatus;
   tags: string[];
   expiration_date: string | null;
@@ -71,9 +73,11 @@ export interface RecipeIngredient {
 }
 
 // 조인 조회 결과 (레시피 목록/실행/수정 화면 공용)
+type RecipeItemFields = "id" | "name" | "unit" | "current_stock" | "capacity" | "capacity_unit" | "stock_display_mode";
+
 export interface RecipeWithDetail extends Recipe {
-  output_item: Pick<Item, "id" | "name" | "unit" | "current_stock"> | null;
+  output_item: Pick<Item, RecipeItemFields> | null;
   recipe_ingredients: (RecipeIngredient & {
-    item: Pick<Item, "id" | "name" | "unit" | "current_stock"> | null;
+    item: Pick<Item, RecipeItemFields> | null;
   })[];
 }

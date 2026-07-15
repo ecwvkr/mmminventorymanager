@@ -2,11 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { AlertTriangle, CalendarClock, Truck, BellRing, Star, ChevronRight } from "lucide-react";
+import { AlertTriangle, CalendarClock, Truck, BellRing, Star, ChevronRight, PackageCheck, ShoppingBag } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { getOperator } from "@/lib/operator";
 import type { Item } from "@/lib/types";
 import StatusBadge from "@/components/StatusBadge";
-import { capacityLabel } from "@/lib/format";
+import { capacityLabel, formatStock } from "@/lib/format";
 
 function daysUntil(dateStr: string) {
   return Math.floor((new Date(dateStr).getTime() - Date.now()) / 86400000);
@@ -15,16 +16,16 @@ function daysUntil(dateStr: string) {
 export default function DashboardPage() {
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [actionErr, setActionErr] = useState<string | null>(null);
 
+  async function load() {
+    const { data } = await supabase.from("items").select("*").eq("is_active", true);
+    if (data) setItems(data as Item[]);
+    setLoading(false);
+  }
   useEffect(() => {
-    supabase
-      .from("items")
-      .select("*")
-      .eq("is_active", true)
-      .then(({ data }) => {
-        if (data) setItems(data as Item[]);
-        setLoading(false);
-      });
+    load();
   }, []);
 
   const lowItems = useMemo(() => items.filter((i) => i.status === "재고 부족"), [items]);
@@ -48,6 +49,18 @@ export default function DashboardPage() {
 
   const pinned = useMemo(() => items.filter((i) => i.is_pinned), [items]);
 
+  async function completeDelivery(it: Item) {
+    setBusyId(it.id);
+    setActionErr(null);
+    const { error } = await supabase.rpc("receive_order", { p_item_id: it.id, p_operator: getOperator() });
+    setBusyId(null);
+    if (error) {
+      setActionErr(`${it.name}: ${error.message}`);
+      return;
+    }
+    load();
+  }
+
   if (loading) {
     return (
       <>
@@ -68,6 +81,8 @@ export default function DashboardPage() {
           <Stat icon={<Truck size={18} />} label="배송중" value={shippingItems.length} tone={shippingItems.length > 0 ? "shipping" : undefined} href="/status" />
         </div>
 
+        {actionErr && <p className="rounded-lg bg-low/10 p-2 text-xs text-low">{actionErr}</p>}
+
         {/* 주기적 발주 알림 */}
         {periodicAlerts.length > 0 && (
           <section className="rounded-xl border border-shipping/40 bg-shipping/10 p-3">
@@ -78,7 +93,9 @@ export default function DashboardPage() {
               {periodicAlerts.map((i) => (
                 <li key={i.id} className="flex items-center justify-between text-sm">
                   <span className="text-foreground">{i.name}{capacityLabel(i)}</span>
-                  <span className="font-semibold text-shipping">발주 {i.periodic_order_quantity ?? "?"}{i.unit ?? ""}</span>
+                  <span className="font-semibold text-shipping">
+                    발주 {i.periodic_order_quantity != null ? formatStock(i, i.periodic_order_quantity) : "?"}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -112,10 +129,39 @@ export default function DashboardPage() {
         <ShortcutList title="즐겨찾기" icon={<Star size={16} className="text-accent" />} items={pinned} href="/inventory" empty="즐겨찾기한 품목이 없습니다." />
 
         {/* 발주 필요 */}
-        <ShortcutList title="발주 필요" icon={<AlertTriangle size={16} className="text-low" />} items={lowItems} href="/status" empty="재고 부족 품목이 없습니다. 👍" />
+        <ShortcutList
+          title="발주 필요"
+          icon={<AlertTriangle size={16} className="text-low" />}
+          items={lowItems}
+          href="/status"
+          empty="재고 부족 품목이 없습니다. 👍"
+          renderAction={(i) => (
+            <Link
+              href={`/status?tab=발주&add=${i.id}`}
+              className="flex shrink-0 items-center gap-1 rounded-lg bg-primary px-2.5 py-1.5 text-xs font-semibold text-primary-ink"
+            >
+              <ShoppingBag size={13} /> 발주하기
+            </Link>
+          )}
+        />
 
         {/* 배송중 */}
-        <ShortcutList title="배송중" icon={<Truck size={16} className="text-shipping" />} items={shippingItems} href="/status" empty="배송중인 발주가 없습니다." />
+        <ShortcutList
+          title="배송중"
+          icon={<Truck size={16} className="text-shipping" />}
+          items={shippingItems}
+          href="/status"
+          empty="배송중인 발주가 없습니다."
+          renderAction={(i) => (
+            <button
+              disabled={busyId === i.id}
+              onClick={() => completeDelivery(i)}
+              className="flex shrink-0 items-center gap-1 rounded-lg bg-ok px-2.5 py-1.5 text-xs font-semibold text-white disabled:opacity-40"
+            >
+              <PackageCheck size={13} /> 배송완료
+            </button>
+          )}
+        />
       </div>
     </>
   );
@@ -160,12 +206,14 @@ function ShortcutList({
   items,
   href,
   empty,
+  renderAction,
 }: {
   title: string;
   icon: React.ReactNode;
   items: Item[];
   href: string;
   empty: string;
+  renderAction?: (item: Item) => React.ReactNode;
 }) {
   return (
     <section>
@@ -184,15 +232,13 @@ function ShortcutList({
       ) : (
         <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface">
           {items.slice(0, 8).map((i) => (
-            <li key={i.id}>
-              <Link href={href} className="flex items-center gap-3 px-3 py-2.5">
+            <li key={i.id} className="flex items-center gap-3 px-3 py-2.5">
+              <Link href={href} className="flex min-w-0 flex-1 items-center gap-3">
                 <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">{i.name}{capacityLabel(i)}</span>
-                <span className="text-xs text-muted">
-                  {i.current_stock}
-                  {i.unit ?? ""}
-                </span>
-                <StatusBadge status={i.status} />
+                <span className="shrink-0 text-xs text-muted">{formatStock(i, i.current_stock)}</span>
               </Link>
+              <StatusBadge status={i.status} />
+              {renderAction?.(i)}
             </li>
           ))}
         </ul>

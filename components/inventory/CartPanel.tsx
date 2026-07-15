@@ -3,7 +3,7 @@
 import { Trash2 } from "lucide-react";
 import type { Item } from "@/lib/types";
 import type { ChangeType } from "./StepperModal";
-import { capacityLabel } from "@/lib/format";
+import { capacityLabel, formatStock } from "@/lib/format";
 
 export interface CartLine {
   item: Item;
@@ -50,8 +50,8 @@ export default function CartPanel({
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-foreground">{l.item.name}{capacityLabel(l.item)}</p>
                   <p className="text-xs text-muted">
-                    <span className={`font-bold ${TONE[l.type]}`}>{l.type} {SIGN[l.type]}{l.qty}</span>
-                    {l.item.unit ?? ""}
+                    <span className={`font-bold ${TONE[l.type]}`}>{l.type} {SIGN[l.type]}</span>
+                    {formatStock(l.item, l.qty)}
                   </p>
                 </div>
                 <button onClick={() => onRemove(i)} className="rounded p-1 text-muted hover:text-low" aria-label="삭제">

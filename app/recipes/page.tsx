@@ -7,9 +7,11 @@ import { supabase } from "@/lib/supabase";
 import type { Item, RecipeWithDetail } from "@/lib/types";
 import RecipeForm, { type RecipePayload } from "@/components/recipes/RecipeForm";
 import ExecuteRecipeModal from "@/components/recipes/ExecuteRecipeModal";
+import { baseUnitLabel } from "@/lib/format";
 
+const ITEM_FIELDS = "id,name,unit,current_stock,capacity,capacity_unit,stock_display_mode";
 const RECIPE_SELECT =
-  "*, output_item:items!output_item_id(id,name,unit,current_stock), recipe_ingredients(id,recipe_id,item_id,quantity,item:items!item_id(id,name,unit,current_stock))";
+  `*, output_item:items!output_item_id(${ITEM_FIELDS}), recipe_ingredients(id,recipe_id,item_id,quantity,item:items!item_id(${ITEM_FIELDS}))`;
 
 export default function RecipesPage() {
   const [recipes, setRecipes] = useState<RecipeWithDetail[]>([]);
@@ -108,7 +110,7 @@ export default function RecipesPage() {
                 <div className="min-w-0">
                   <h3 className="truncate text-sm font-bold text-foreground">{r.name}</h3>
                   <p className="text-xs text-muted">
-                    → {r.output_item?.name ?? "?"} {r.output_quantity}{r.output_item?.unit ?? ""} · 재료 {r.recipe_ingredients.length}종
+                    → {r.output_item?.name ?? "?"} {r.output_quantity}{r.output_item ? baseUnitLabel(r.output_item) : ""} · 재료 {r.recipe_ingredients.length}종
                   </p>
                 </div>
                 <div className="flex shrink-0 gap-1">
@@ -132,7 +134,7 @@ export default function RecipesPage() {
       </div>
 
       {editing && (
-        <div className="fixed inset-0 z-50 flex justify-center overflow-y-auto bg-black/40 sm:p-4" onClick={() => setEditing(null)}>
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 sm:p-4" onClick={() => setEditing(null)}>
           <div className="min-h-full w-full max-w-xl bg-background sm:min-h-0 sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
             <header className="sticky top-0 z-10 border-b border-border bg-background/95 px-4 py-3 backdrop-blur">
               <h2 className="text-base font-bold text-foreground">{editing === "new" ? "새 레시피" : "레시피 수정"}</h2>

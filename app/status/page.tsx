@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { ExternalLink, Phone, PackageCheck, Truck, Search } from "lucide-react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { PackageCheck, Truck, Search, Trash2, ShoppingBag } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { getOperator } from "@/lib/operator";
 import type { Item, ItemStatus } from "@/lib/types";
 import StatusBadge from "@/components/StatusBadge";
 import ItemDetailModal from "@/components/ItemDetailModal";
 import Chip from "@/components/Chip";
-import { capacityLabel } from "@/lib/format";
+import StockInput from "@/components/StockInput";
+import { capacityLabel, formatStock } from "@/lib/format";
 
 type Tab = "전체" | "발주";
 type StatusFilter = "전체" | ItemStatus;
@@ -16,7 +18,27 @@ type SortKey = "이름" | "재고적은순" | "가격높은순";
 
 const STATUS_FILTERS: StatusFilter[] = ["전체", "정상", "재고 부족", "배송중", "비활성화"];
 
+interface OrderCartLine {
+  item: Item;
+  qty: number;
+}
+
+// 발주는 항상 구매 단위(판/박스=capacity)로만 가능하므로 부족분을 그 배수로 올림.
+// 예: 계란 22개 부족 + 1판=30개 → 1판(30개) 제안
+function defaultOrderQty(it: Item) {
+  const raw = it.periodic_order_quantity ?? Math.max(it.min_required_stock - it.current_stock, 1);
+  return it.capacity ? Math.ceil(raw / it.capacity) * it.capacity : raw;
+}
+
 export default function StatusPage() {
+  return (
+    <Suspense fallback={null}>
+      <StatusPageInner />
+    </Suspense>
+  );
+}
+
+function StatusPageInner() {
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>("전체");
@@ -24,9 +46,15 @@ export default function StatusPage() {
   const [sortKey, setSortKey] = useState<SortKey>("이름");
   const [q, setQ] = useState("");
   const [catFilter, setCatFilter] = useState<string | null>(null);
-  const [orderQty, setOrderQty] = useState<Record<string, number>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [editing, setEditing] = useState<Item | null>(null);
+
+  const [orderCart, setOrderCart] = useState<OrderCartLine[]>([]);
+  const [orderBusy, setOrderBusy] = useState(false);
+  const [orderErr, setOrderErr] = useState<string | null>(null);
+
+  const searchParams = useSearchParams();
+  const addedFromQuery = useRef(false);
 
   async function load() {
     setLoading(true);
@@ -37,6 +65,22 @@ export default function StatusPage() {
   useEffect(() => {
     load();
   }, []);
+
+  // 대시보드 "발주하기"에서 넘어온 경우: 발주 탭으로 전환 + 해당 품목 자동으로 담기
+  useEffect(() => {
+    if (searchParams.get("tab") === "발주") setTab("발주");
+
+    if (addedFromQuery.current || items.length === 0) return;
+    const addId = searchParams.get("add");
+    if (!addId) return;
+    const target = items.find((i) => i.id === addId);
+    if (target) {
+      setOrderCart((cart) =>
+        cart.some((c) => c.item.id === target.id) ? cart : [...cart, { item: target, qty: defaultOrderQty(target) }]
+      );
+      addedFromQuery.current = true;
+    }
+  }, [items, searchParams]);
 
   // ── 전체 탭 ──
   const categories = useMemo(
@@ -58,30 +102,48 @@ export default function StatusPage() {
     return rows;
   }, [items, statusFilter, catFilter, q, sortKey]);
 
-  // ── 발주 탭: 재고 부족 → 거래처별 그룹 ──
-  const vendorGroups = useMemo(() => {
-    const low = items.filter((i) => i.status === "재고 부족");
-    const map = new Map<string, Item[]>();
-    for (const it of low) {
-      const key = it.vendor_name || "거래처 미지정";
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(it);
-    }
-    return [...map.entries()];
-  }, [items]);
-
+  // ── 발주 탭 ──
+  const lowStockItems = useMemo(() => items.filter((i) => i.status === "재고 부족"), [items]);
   const shipping = useMemo(() => items.filter((i) => i.status === "배송중"), [items]);
 
-  function qtyFor(it: Item) {
-    return orderQty[it.id] ?? it.periodic_order_quantity ?? Math.max(it.min_required_stock - it.current_stock, 1);
+  function orderNow(it: Item) {
+    if (it.order_url) {
+      window.open(it.order_url, "_blank", "noopener,noreferrer");
+    } else if (it.order_contact) {
+      window.location.href = `tel:${it.order_contact}`;
+    }
+    setOrderCart((cart) =>
+      cart.some((c) => c.item.id === it.id) ? cart : [...cart, { item: it, qty: defaultOrderQty(it) }]
+    );
   }
-
-  async function markOrdered(it: Item) {
-    setBusy(it.id);
-    await supabase.rpc("mark_ordered", { p_item_id: it.id, p_quantity: qtyFor(it), p_operator: getOperator() });
-    setBusy(null);
+  function updateCartQty(itemId: string, qty: number) {
+    setOrderCart((cart) => cart.map((c) => (c.item.id === itemId ? { ...c, qty: Math.max(0, qty) } : c)));
+  }
+  function removeCartLine(itemId: string) {
+    setOrderCart((cart) => cart.filter((c) => c.item.id !== itemId));
+  }
+  async function completeOrders() {
+    if (orderCart.length === 0) return;
+    setOrderBusy(true);
+    setOrderErr(null);
+    const operator = getOperator();
+    for (const line of orderCart) {
+      const { error } = await supabase.rpc("mark_ordered", {
+        p_item_id: line.item.id,
+        p_quantity: line.qty,
+        p_operator: operator,
+      });
+      if (error) {
+        setOrderBusy(false);
+        setOrderErr(`${line.item.name}: ${error.message}`);
+        return;
+      }
+    }
+    setOrderBusy(false);
+    setOrderCart([]);
     load();
   }
+
   async function receiveOrder(it: Item) {
     setBusy(it.id);
     await supabase.rpc("receive_order", { p_item_id: it.id, p_operator: getOperator() });
@@ -102,7 +164,7 @@ export default function StatusPage() {
                 tab === t ? "bg-primary text-primary-ink" : "text-muted"
               }`}
             >
-              {t === "발주" ? "거래처별 발주" : "전체 목록"}
+              {t === "발주" ? "발주" : "전체 목록"}
             </button>
           ))}
         </div>
@@ -127,13 +189,17 @@ export default function StatusPage() {
           />
         ) : (
           <OrderView
-            vendorGroups={vendorGroups}
+            items={lowStockItems}
             shipping={shipping}
-            qtyFor={qtyFor}
-            setOrderQty={setOrderQty}
-            markOrdered={markOrdered}
-            receiveOrder={receiveOrder}
+            orderCart={orderCart}
+            orderBusy={orderBusy}
+            orderErr={orderErr}
+            onOrderNow={orderNow}
+            onUpdateCartQty={updateCartQty}
+            onRemoveCartLine={removeCartLine}
+            onCompleteOrders={completeOrders}
             busy={busy}
+            receiveOrder={receiveOrder}
           />
         )}
       </div>
@@ -242,11 +308,8 @@ function TableView({
                   </p>
                 </div>
                 <div className="text-right text-xs text-muted">
-                  <span className="font-semibold text-foreground">
-                    {it.current_stock}
-                    {it.unit ?? ""}
-                  </span>
-                  <span className="text-muted"> / 최소 {it.min_required_stock}</span>
+                  <span className="font-semibold text-foreground">{formatStock(it, it.current_stock)}</span>
+                  <span className="text-muted"> / 최소 {formatStock(it, it.min_required_stock)}</span>
                 </div>
                 <StatusBadge status={it.status} />
               </button>
@@ -258,84 +321,150 @@ function TableView({
   );
 }
 
-// ────────────────────────────── 거래처별 발주 ──────────────────────────────
+// ────────────────────────────── 발주 ──────────────────────────────
 function OrderView({
-  vendorGroups,
+  items,
   shipping,
-  qtyFor,
-  setOrderQty,
-  markOrdered,
-  receiveOrder,
+  orderCart,
+  orderBusy,
+  orderErr,
+  onOrderNow,
+  onUpdateCartQty,
+  onRemoveCartLine,
+  onCompleteOrders,
   busy,
+  receiveOrder,
 }: {
-  vendorGroups: [string, Item[]][];
+  items: Item[];
   shipping: Item[];
-  qtyFor: (it: Item) => number;
-  setOrderQty: React.Dispatch<React.SetStateAction<Record<string, number>>>;
-  markOrdered: (it: Item) => void;
-  receiveOrder: (it: Item) => void;
+  orderCart: OrderCartLine[];
+  orderBusy: boolean;
+  orderErr: string | null;
+  onOrderNow: (it: Item) => void;
+  onUpdateCartQty: (itemId: string, qty: number) => void;
+  onRemoveCartLine: (itemId: string) => void;
+  onCompleteOrders: () => void;
   busy: string | null;
+  receiveOrder: (it: Item) => void;
 }) {
+  const [vendorFilter, setVendorFilter] = useState<string | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+
+  const vendors = useMemo(() => Array.from(new Set(items.map((i) => i.vendor_name || "거래처 미지정"))), [items]);
+  const categories = useMemo(
+    () => Array.from(new Set(items.map((i) => i.category).filter(Boolean))) as string[],
+    [items]
+  );
+  const filtered = useMemo(
+    () =>
+      items.filter(
+        (i) =>
+          (!vendorFilter || (i.vendor_name || "거래처 미지정") === vendorFilter) &&
+          (!categoryFilter || i.category === categoryFilter)
+      ),
+    [items, vendorFilter, categoryFilter]
+  );
+
   return (
     <div className="space-y-5">
-      {/* 발주 필요 */}
-      <section>
-        <h2 className="mb-2 text-sm font-bold text-foreground">발주 필요 (거래처별)</h2>
-        {vendorGroups.length === 0 ? (
-          <p className="rounded-xl border border-border bg-surface p-4 text-sm text-muted">재고 부족 품목이 없습니다. 👍</p>
+      {/* 발주 리스트 (담아둔 품목) */}
+      <section className="rounded-xl border border-border bg-surface p-3">
+        <div className="mb-2 flex items-center justify-between">
+          <h2 className="flex items-center gap-1.5 text-sm font-bold text-foreground">
+            <ShoppingBag size={16} /> 발주 리스트
+          </h2>
+          <span className="text-xs text-muted">{orderCart.length}건</span>
+        </div>
+        {orderCart.length === 0 ? (
+          <p className="text-xs text-muted">담긴 품목이 없습니다. 아래 목록에서 ‘발주하기’를 눌러 담으세요.</p>
         ) : (
-          <div className="space-y-3">
-            {vendorGroups.map(([vendor, list]) => {
-              const url = list.find((i) => i.order_url)?.order_url;
-              const contact = list.find((i) => i.order_contact)?.order_contact;
+          <ul className="space-y-2">
+            {orderCart.map((line) => (
+              <li key={line.item.id} className="flex items-center gap-2 rounded-lg border border-border bg-background p-2">
+                <span className="min-w-0 flex-1 truncate text-sm text-foreground">
+                  {line.item.name}{capacityLabel(line.item)}
+                </span>
+                <StockInput
+                  capacity={line.item.capacity}
+                  capacityUnit={line.item.capacity_unit}
+                  bundleUnit={line.item.unit}
+                  mode={line.item.stock_display_mode}
+                  valueBase={line.qty}
+                  onChange={(v) => onUpdateCartQty(line.item.id, v)}
+                  size="compact"
+                />
+                <button
+                  onClick={() => onRemoveCartLine(line.item.id)}
+                  className="shrink-0 rounded p-1 text-muted hover:text-low"
+                  aria-label="삭제"
+                >
+                  <Trash2 size={15} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        {orderErr && <p className="mt-2 rounded-lg bg-low/10 p-2 text-xs text-low">{orderErr}</p>}
+        <button
+          disabled={orderCart.length === 0 || orderBusy}
+          onClick={onCompleteOrders}
+          className="mt-3 w-full rounded-xl bg-primary py-2.5 text-sm font-bold text-primary-ink disabled:opacity-40"
+        >
+          {orderBusy ? "처리 중…" : `발주 완료 (${orderCart.length}건)`}
+        </button>
+      </section>
+
+      {/* 발주 필요 목록 */}
+      <section>
+        <h2 className="mb-2 text-sm font-bold text-foreground">발주 필요</h2>
+
+        <div className="mb-2 flex gap-2 overflow-x-auto pb-1">
+          <Chip active={vendorFilter === null} onClick={() => setVendorFilter(null)}>전체 거래처</Chip>
+          {vendors.map((v) => (
+            <Chip key={v} active={vendorFilter === v} onClick={() => setVendorFilter(v)}>{v}</Chip>
+          ))}
+        </div>
+        {categories.length > 0 && (
+          <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
+            <Chip active={categoryFilter === null} onClick={() => setCategoryFilter(null)}>전체 카테고리</Chip>
+            {categories.map((c) => (
+              <Chip key={c} active={categoryFilter === c} onClick={() => setCategoryFilter(c)}>{c}</Chip>
+            ))}
+          </div>
+        )}
+
+        {filtered.length === 0 ? (
+          <p className="rounded-xl border border-border bg-surface p-4 text-sm text-muted">
+            {items.length === 0 ? "재고 부족 품목이 없습니다. 👍" : "조건에 맞는 품목이 없습니다."}
+          </p>
+        ) : (
+          <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface">
+            {filtered.map((it) => {
+              const inCart = orderCart.some((c) => c.item.id === it.id);
               return (
-                <div key={vendor} className="overflow-hidden rounded-xl border border-border bg-surface">
-                  <div className="flex items-center justify-between gap-2 border-b border-border bg-background/50 px-3 py-2">
-                    <span className="truncate text-sm font-semibold text-foreground">{vendor}</span>
-                    <div className="flex shrink-0 gap-1.5">
-                      {url && (
-                        <a href={url} target="_blank" rel="noreferrer" className="flex items-center gap-1 rounded-lg border border-border px-2 py-1 text-xs text-foreground">
-                          <ExternalLink size={13} /> 웹샵
-                        </a>
-                      )}
-                      {contact && (
-                        <a href={`tel:${contact}`} className="flex items-center gap-1 rounded-lg border border-border px-2 py-1 text-xs text-foreground">
-                          <Phone size={13} /> 전화
-                        </a>
-                      )}
-                    </div>
+                <li key={it.id} className="flex items-center gap-2 px-3 py-2.5">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-foreground">{it.name}{capacityLabel(it)}</p>
+                    <p className="text-xs text-muted">
+                      {it.vendor_name || "거래처 미지정"} · 현재 {formatStock(it, it.current_stock)} / 최소 {formatStock(it, it.min_required_stock)}
+                    </p>
                   </div>
-                  <ul className="divide-y divide-border">
-                    {list.map((it) => (
-                      <li key={it.id} className="flex items-center gap-2 px-3 py-2.5">
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium text-foreground">{it.name}{capacityLabel(it)}</p>
-                          <p className="text-xs text-muted">
-                            현재 {it.current_stock}
-                            {it.unit ?? ""} / 최소 {it.min_required_stock}
-                          </p>
-                        </div>
-                        <input
-                          type="number"
-                          value={qtyFor(it)}
-                          onChange={(e) => setOrderQty((m) => ({ ...m, [it.id]: Math.max(1, Number(e.target.value) || 1) }))}
-                          className="w-14 rounded-lg border border-border bg-background px-2 py-1 text-center text-sm text-foreground"
-                          aria-label="발주 수량"
-                        />
-                        <button
-                          disabled={busy === it.id}
-                          onClick={() => markOrdered(it)}
-                          className="shrink-0 rounded-lg bg-primary px-2.5 py-1.5 text-xs font-semibold text-primary-ink disabled:opacity-40"
-                        >
-                          발주 완료
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                  {inCart ? (
+                    <span className="shrink-0 rounded-lg border border-primary/40 px-2.5 py-1.5 text-xs font-semibold text-primary">
+                      담김 ✓
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => onOrderNow(it)}
+                      className="shrink-0 rounded-lg bg-primary px-2.5 py-1.5 text-xs font-semibold text-primary-ink"
+                    >
+                      발주하기
+                    </button>
+                  )}
+                </li>
               );
             })}
-          </div>
+          </ul>
         )}
       </section>
 
@@ -353,8 +482,8 @@ function OrderView({
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-foreground">{it.name}{capacityLabel(it)}</p>
                   <p className="text-xs text-muted">
-                    발주 수량 {it.pending_order_quantity ?? "?"}
-                    {it.unit ?? ""} · {it.vendor_name || "거래처 미지정"}
+                    발주 수량 {it.pending_order_quantity != null ? formatStock(it, it.pending_order_quantity) : "?"}
+                    {" · "}{it.vendor_name || "거래처 미지정"}
                   </p>
                 </div>
                 <button
