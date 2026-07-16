@@ -8,6 +8,7 @@ import type { Item, RecipeWithDetail } from "@/lib/types";
 import RecipeForm, { type RecipePayload } from "@/components/recipes/RecipeForm";
 import ExecuteRecipeModal from "@/components/recipes/ExecuteRecipeModal";
 import { baseUnitLabel } from "@/lib/format";
+import { useEscapeKey } from "@/lib/useEscapeKey";
 
 const ITEM_FIELDS = "id,name,unit,current_stock,capacity,capacity_unit,stock_display_mode";
 const RECIPE_SELECT =
@@ -21,6 +22,7 @@ export default function RecipesPage() {
   const [executing, setExecuting] = useState<RecipeWithDetail | null>(null);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  useEscapeKey(() => setEditing(null));
 
   async function load() {
     setLoading(true);

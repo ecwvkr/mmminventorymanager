@@ -8,6 +8,7 @@ import ItemForm, { type ItemPayload } from "@/components/ItemForm";
 import StatusBadge from "@/components/StatusBadge";
 import type { Item } from "@/lib/types";
 import { capacityLabel } from "@/lib/format";
+import { useEscapeKey } from "@/lib/useEscapeKey";
 
 export default function ItemDetailModal({
   item,
@@ -18,6 +19,7 @@ export default function ItemDetailModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  useEscapeKey(onClose);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);

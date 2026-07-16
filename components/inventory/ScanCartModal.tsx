@@ -8,6 +8,7 @@ import type { CartLine } from "./CartPanel";
 import { type ChangeType, defaultQty } from "./StepperModal";
 import { capacityLabel, formatStock } from "@/lib/format";
 import StockInput from "@/components/StockInput";
+import { useEscapeKey } from "@/lib/useEscapeKey";
 
 const MODES: { t: ChangeType; label: string }[] = [
   { t: "입고", label: "입고 [+]" },
@@ -29,6 +30,7 @@ export default function ScanCartModal({
   onClose: () => void;
 }) {
   const [mode, setMode] = useState<ChangeType | null>(null);
+  useEscapeKey(onClose);
 
   return (
     <div className="fixed inset-0 z-[60] bg-black">

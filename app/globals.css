@@ -5,15 +5,15 @@
   --background: #faf6f0;   /* cream */
   --surface: #ffffff;
   --foreground: #2e2420;   /* espresso ink */
-  --muted: #8a7d72;        /* milk-coffee gray */
+  --muted: #7b6f66;        /* milk-coffee gray (4.5:1 이상 대비) */
   --border: #e7ddd0;
   --primary: #6f4e37;      /* coffee */
   --primary-ink: #ffffff;
   --accent: #b08968;       /* latte */
-  /* 상태 색 */
+  /* 상태 색 (배경 대비 4.5:1 이상 확보) */
   --ok: #3f7d5c;
-  --low: #c0552e;          /* 재고 부족 */
-  --shipping: #b8892b;     /* 배송중 */
+  --low: #ba522d;          /* 재고 부족 */
+  --shipping: #906b22;     /* 배송중 */
   --inactive: #9a9a9a;     /* 비활성화 */
 }
 
@@ -43,6 +43,8 @@
     --primary: #c8a07a;
     --primary-ink: #1c1613;
     --accent: #b08968;
+    --ok: #478e68;          /* 다크 배경 대비 4.5:1 이상 */
+    --low: #cf5e35;         /* 다크 배경 대비 4.5:1 이상 */
   }
 }
 

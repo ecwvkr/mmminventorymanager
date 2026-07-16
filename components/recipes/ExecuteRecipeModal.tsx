@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { getOperator } from "@/lib/operator";
 import { baseUnitLabel, formatStock } from "@/lib/format";
 import type { RecipeWithDetail } from "@/lib/types";
+import { useEscapeKey } from "@/lib/useEscapeKey";
 
 export default function ExecuteRecipeModal({
   recipe,
@@ -16,6 +17,7 @@ export default function ExecuteRecipeModal({
   onClose: () => void;
   onDone: () => void;
 }) {
+  useEscapeKey(onClose);
   const [qtys, setQtys] = useState<Record<string, string>>(
     Object.fromEntries(recipe.recipe_ingredients.map((ri) => [ri.item_id, String(ri.quantity)]))
   );

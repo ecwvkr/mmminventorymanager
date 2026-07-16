@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { X } from "lucide-react";
 import { useBarcodeScanner } from "@/lib/useBarcodeScanner";
+import { useEscapeKey } from "@/lib/useEscapeKey";
 
 // HTML5 카메라 기반 바코드/QR 스캐너 (단발성: 1회 인식 후 자동 종료).
 export default function ScannerModal({
@@ -12,6 +13,7 @@ export default function ScannerModal({
   onDetect: (text: string) => void;
   onClose: () => void;
 }) {
+  useEscapeKey(onClose);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [err, setErr] = useState<string | null>(null);
 

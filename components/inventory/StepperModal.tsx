@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import type { Item } from "@/lib/types";
 import { capacityLabel, formatStock } from "@/lib/format";
 import StockInput from "@/components/StockInput";
+import { useEscapeKey } from "@/lib/useEscapeKey";
 
 export type ChangeType = "입고" | "출고" | "실사";
 
@@ -34,6 +35,7 @@ export default function StepperModal({
   onAdd: (type: ChangeType, qty: number) => void;
   onDeactivate: () => void;
 }) {
+  useEscapeKey(onClose);
   const [type, setType] = useState<ChangeType | null>(null);
   const [qty, setQty] = useState(1);
 

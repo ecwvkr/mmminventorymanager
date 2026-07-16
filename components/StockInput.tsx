@@ -23,11 +23,9 @@ export default function StockInput({
   size?: "normal" | "compact";
 }) {
   const useBundle = mode === "묶음" && !!capacity && !!bundleUnit;
-  const iconSize = size === "compact" ? 13 : 20;
-  const btnCls =
-    size === "compact"
-      ? "flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border text-foreground hover:bg-background"
-      : "flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border text-foreground hover:bg-background";
+  const iconSize = size === "compact" ? 15 : 20;
+  // 버튼은 size 상관없이 44px 터치타깃 유지 (PRODUCT.md 접근성 원칙), compact는 입력창 폭/글자만 축소
+  const btnCls = "flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border text-foreground hover:bg-background";
   const mainInputCls = `${size === "compact" ? "w-14 py-1.5 text-sm" : "w-20 py-2 text-xl"} rounded-lg border border-border bg-background text-center font-bold text-foreground`;
 
   if (!useBundle) {

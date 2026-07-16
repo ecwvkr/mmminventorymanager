@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { Item } from "@/lib/types";
 import StatusBadge from "@/components/StatusBadge";
 import { capacityLabel, formatStock } from "@/lib/format";
@@ -8,10 +9,9 @@ export default function ItemCard({ item, onClick }: { item: Item; onClick: () =>
       onClick={onClick}
       className="flex flex-col rounded-xl border border-border bg-surface p-3 text-left transition hover:border-primary/50 hover:shadow-sm"
     >
-      <div className="mb-2 flex aspect-square w-full items-center justify-center overflow-hidden rounded-lg bg-background">
+      <div className="relative mb-2 flex aspect-square w-full items-center justify-center overflow-hidden rounded-lg bg-background">
         {item.image_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={item.image_url} alt={item.name} className="h-full w-full object-cover" />
+          <Image src={item.image_url} alt={item.name} fill sizes="(max-width: 640px) 50vw, 200px" className="object-cover" />
         ) : (
           <span className="text-3xl opacity-40">📦</span>
         )}

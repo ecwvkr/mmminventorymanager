@@ -137,7 +137,7 @@ export default function InventoryPage() {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="품목명·태그 검색"
-            className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted"
+            className="w-full rounded bg-transparent text-sm text-foreground outline-none focus:ring-2 focus:ring-primary placeholder:text-muted"
           />
         </div>
         {/* 카테고리 가로 스크롤 바 */}

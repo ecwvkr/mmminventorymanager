@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-16T00:00:00Z",
+  "title": "Design System: 카페 무무무 인벤토리 매니저",
+  "extensions": {
+    "colorMeta": {
+      "primary": { "role": "primary", "displayName": "Roasted Coffee", "canonical": "oklch(42% 0.06 55)", "tonalRamp": ["oklch(15% 0.03 55)", "oklch(24% 0.045 55)", "oklch(33% 0.055 55)", "oklch(42% 0.06 55)", "oklch(52% 0.06 55)", "oklch(64% 0.05 55)", "oklch(78% 0.035 55)", "oklch(92% 0.015 55)"] },
+      "accent": { "role": "secondary", "displayName": "Latte Tan", "canonical": "oklch(62% 0.05 55)", "tonalRamp": ["oklch(20% 0.025 55)", "oklch(30% 0.04 55)", "oklch(42% 0.05 55)", "oklch(52% 0.055 55)", "oklch(62% 0.05 55)", "oklch(72% 0.04 55)", "oklch(83% 0.025 55)", "oklch(94% 0.01 55)"] },
+      "background": { "role": "neutral", "displayName": "Cream", "canonical": "oklch(97% 0.01 70)", "tonalRamp": ["oklch(18% 0.015 70)", "oklch(30% 0.015 70)", "oklch(45% 0.015 70)", "oklch(60% 0.015 70)", "oklch(75% 0.012 70)", "oklch(87% 0.01 70)", "oklch(93% 0.008 70)", "oklch(97% 0.01 70)"] },
+      "surface": { "role": "neutral", "displayName": "Surface White", "canonical": "oklch(100% 0 0)", "tonalRamp": ["oklch(20% 0 0)", "oklch(35% 0 0)", "oklch(50% 0 0)", "oklch(65% 0 0)", "oklch(78% 0 0)", "oklch(88% 0 0)", "oklch(95% 0 0)", "oklch(100% 0 0)"] },
+      "foreground": { "role": "neutral", "displayName": "Espresso Ink", "canonical": "oklch(27% 0.025 40)", "tonalRamp": ["oklch(10% 0.015 40)", "oklch(18% 0.02 40)", "oklch(27% 0.025 40)", "oklch(38% 0.025 40)", "oklch(50% 0.022 40)", "oklch(65% 0.018 40)", "oklch(80% 0.012 40)", "oklch(93% 0.006 40)"] },
+      "muted": { "role": "neutral", "displayName": "Milk-Coffee Gray", "canonical": "oklch(56% 0.025 50)", "tonalRamp": ["oklch(20% 0.015 50)", "oklch(32% 0.02 50)", "oklch(44% 0.022 50)", "oklch(56% 0.025 50)", "oklch(66% 0.02 50)", "oklch(76% 0.016 50)", "oklch(87% 0.01 50)", "oklch(95% 0.005 50)"] },
+      "border": { "role": "neutral", "displayName": "Border", "canonical": "oklch(90% 0.015 60)", "tonalRamp": ["oklch(25% 0.015 60)", "oklch(40% 0.018 60)", "oklch(55% 0.018 60)", "oklch(68% 0.016 60)", "oklch(78% 0.015 60)", "oklch(85% 0.014 60)", "oklch(90% 0.015 60)", "oklch(96% 0.008 60)"] },
+      "status-ok": { "role": "status", "displayName": "Stock OK", "canonical": "oklch(47% 0.08 155)", "tonalRamp": ["oklch(16% 0.04 155)", "oklch(27% 0.06 155)", "oklch(37% 0.07 155)", "oklch(47% 0.08 155)", "oklch(58% 0.075 155)", "oklch(70% 0.065 155)", "oklch(82% 0.045 155)", "oklch(93% 0.02 155)"] },
+      "status-low": { "role": "status", "displayName": "Stock Low", "canonical": "oklch(50% 0.15 40)", "tonalRamp": ["oklch(18% 0.08 40)", "oklch(28% 0.11 40)", "oklch(39% 0.13 40)", "oklch(50% 0.15 40)", "oklch(61% 0.14 40)", "oklch(72% 0.11 40)", "oklch(84% 0.07 40)", "oklch(94% 0.03 40)"] },
+      "status-shipping": { "role": "status", "displayName": "Shipping Amber", "canonical": "oklch(58% 0.12 75)", "tonalRamp": ["oklch(20% 0.06 75)", "oklch(32% 0.09 75)", "oklch(45% 0.11 75)", "oklch(58% 0.12 75)", "oklch(68% 0.11 75)", "oklch(78% 0.09 75)", "oklch(87% 0.06 75)", "oklch(95% 0.025 75)"] },
+      "status-inactive": { "role": "status", "displayName": "Inactive Gray", "canonical": "oklch(63% 0 0)", "tonalRamp": ["oklch(22% 0 0)", "oklch(35% 0 0)", "oklch(48% 0 0)", "oklch(63% 0 0)", "oklch(72% 0 0)", "oklch(81% 0 0)", "oklch(90% 0 0)", "oklch(96% 0 0)"] }
+    },
+    "typographyMeta": {
+      "headline": { "displayName": "Headline", "purpose": "각 페이지 상단 제목. 화면당 한 번만 등장." },
+      "title": { "displayName": "Title", "purpose": "카드/섹션 제목, 리스트 강조 텍스트, 버튼 레이블." },
+      "body": { "displayName": "Body", "purpose": "기본 본문 — 리스트 행, 폼 입력값. 이 시스템의 주력 크기." },
+      "label": { "displayName": "Label", "purpose": "메타데이터, 상태 배지, 하단 네비 라벨, 태그." }
+    },
+    "shadows": [
+      { "name": "hover-lift", "value": "0 1px 2px rgba(0,0,0,0.05)", "purpose": "재고관리 품목 카드 호버 시에만 등장하는 미세한 그림자." },
+      { "name": "floating-panel", "value": "0 10px 15px rgba(0,0,0,0.1)", "purpose": "레시피 재료 검색 콤보박스처럼 콘텐츠 위에 뜨는 목록 전용." }
+    ],
+    "motion": [
+      { "name": "ease-standard", "value": "ease", "purpose": "색상·불투명도 전환의 기본 이징 (transition-colors, hover 상태)." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "화면당 핵심 액션 하나(저장/발주하기/발주 완료)에만 쓰는 채워진 버튼.",
+      "html": "<button class=\"ds-btn-primary\">저장</button>",
+      "css": ".ds-btn-primary { background: #6f4e37; color: #ffffff; padding: 12px 16px; border-radius: 12px; font-family: 'IBM Plex Sans KR', system-ui, sans-serif; font-weight: 700; font-size: 14px; border: none; cursor: pointer; transition: opacity 0.15s ease; } .ds-btn-primary:hover { opacity: 0.92; } .ds-btn-primary:focus-visible { outline: 2px solid #6f4e37; outline-offset: 2px; } .ds-btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }"
+    },
+    {
+      "name": "Filter Chip",
+      "kind": "chip",
+      "refersTo": "chip-active",
+      "description": "카테고리/거래처/상태 필터. 원형, 활성 시 Roasted Coffee 배경으로 전환.",
+      "html": "<div style=\"display:flex;gap:8px;\"><button class=\"ds-chip ds-chip-active\">전체</button><button class=\"ds-chip\">원두</button></div>",
+      "css": ".ds-chip { background: #ffffff; color: #8a7d72; border: 1px solid #e7ddd0; border-radius: 9999px; padding: 4px 12px; font-family: 'IBM Plex Sans KR', system-ui, sans-serif; font-weight: 500; font-size: 14px; cursor: pointer; transition: background 0.15s ease, color 0.15s ease; } .ds-chip:hover { color: #2e2420; } .ds-chip-active, .ds-chip-active:hover { background: #6f4e37; color: #ffffff; border-color: #6f4e37; }"
+    },
+    {
+      "name": "Status Badge",
+      "kind": "custom",
+      "refersTo": "status-badge",
+      "description": "재고 상태(정상/재고 부족/배송중/비활성화) 4종 고정 배지. 10% 불투명 배경 + 동일 색 텍스트.",
+      "html": "<span class=\"ds-badge ds-badge-low\">재고 부족</span>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; border-radius: 9999px; padding: 2px 8px; font-family: 'IBM Plex Sans KR', system-ui, sans-serif; font-weight: 500; font-size: 11px; } .ds-badge-ok { background: rgba(63,125,92,0.1); color: #3f7d5c; } .ds-badge-low { background: rgba(192,85,46,0.1); color: #c0552e; } .ds-badge-shipping { background: rgba(184,137,43,0.1); color: #b8892b; } .ds-badge-inactive { background: rgba(154,154,154,0.1); color: #9a9a9a; }"
+    },
+    {
+      "name": "Input Field",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "검색/폼 텍스트 입력. 포커스 시 테두리만 Roasted Coffee로 전환.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"품목명·태그 검색\" />",
+      "css": ".ds-input { width: 100%; background: #ffffff; color: #2e2420; border: 1px solid #e7ddd0; border-radius: 8px; padding: 8px 12px; font-family: 'IBM Plex Sans KR', system-ui, sans-serif; font-weight: 500; font-size: 14px; outline: none; box-sizing: border-box; transition: border-color 0.15s ease; } .ds-input::placeholder { color: #8a7d72; } .ds-input:focus { border-color: #6f4e37; }"
+    },
+    {
+      "name": "Bottom Nav Item",
+      "kind": "nav",
+      "refersTo": "bottom-nav-item",
+      "description": "하단 탭바 5개 고정 항목 중 하나. 활성 시 아이콘 선 굵기와 색이 함께 바뀐다.",
+      "html": "<a class=\"ds-nav-item ds-nav-item-active\" href=\"#\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"3\" width=\"7\" height=\"9\" rx=\"1\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"5\" rx=\"1\"/><rect x=\"14\" y=\"12\" width=\"7\" height=\"9\" rx=\"1\"/><rect x=\"3\" y=\"16\" width=\"7\" height=\"5\" rx=\"1\"/></svg><span>대시보드</span></a>",
+      "css": ".ds-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; font-family: 'IBM Plex Sans KR', system-ui, sans-serif; font-weight: 500; font-size: 11px; text-decoration: none; color: #8a7d72; transition: color 0.15s ease; } .ds-nav-item:hover { color: #2e2420; } .ds-nav-item-active { color: #6f4e37; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Quiet Counter",
+    "overview": "이 시스템은 매장 카운터 그 자체다 — 손님도, 소음도 없이 할 일만 조용히 처리한다. 커피 브랜드의 온기(코코아 브라운·크림)는 배경에 남아있지만, 화면 위에서 목소리를 내는 건 숫자와 상태뿐이다. 장식은 절제하고, 정보는 즉시 읽히고, 손끝은 어디를 눌러야 할지 헷갈리지 않는다.\n\n밀도는 촘촘하되 산만하지 않다. 한 화면에 재고 수십 건이 리스트로 쌓여도, 위계는 굵기와 크기 두 가지 신호로만 정리된다(제목 굵게·본문 보통·메타데이터 흐리게). 이 시스템이 명시적으로 거부하는 것: 칸이 빽빽한 엑셀형 스프레드시트, 그라데이션과 히어로 메트릭 카드로 뒤덮인 화려한 SaaS 대시보드, 캐주얼하고 유희적인 소비자 앱의 인터랙션. 이건 업무 도구이고, 담백함이 신뢰를 만든다.",
+    "keyCharacteristics": [
+      "단일 서체(IBM Plex Sans KR), 단일 액션 컬러(커피 브라운) — 목소리를 하나로 유지",
+      "평면(flat) 기본, 그림자는 호버 피드백에서만 미세하게 등장",
+      "상태(재고 부족/배송중/정상/비활성화)는 항상 색 + 텍스트 라벨로 이중 표시",
+      "터치타깃은 표준보다 넉넉하게(원형 스테퍼 버튼 44px 이상) — 고령/파트타이머 직원 고려"
+    ],
+    "rules": [
+      { "name": "The One Action Rule", "body": "화면 어디서나 진짜 액션에만 Roasted Coffee를 쓴다. 정보 표시에는 상태 색이나 중립색만 쓰고, 브랜드 색으로 장식하지 않는다.", "section": "colors" },
+      { "name": "The Dual-Signal Rule", "body": "상태는 색만으로 표현하지 않는다. 배지는 항상 색 배경 + 텍스트 라벨을 함께 쓴다. 색맹·저시력 직원도 텍스트로 구분할 수 있어야 한다.", "section": "colors" },
+      { "name": "The No-Display-Face Rule", "body": "히어로 헤드라인이나 마케팅용 디스플레이 서체는 존재하지 않는다. 가장 큰 텍스트도 24px을 넘지 않는다 — 이 앱은 소리치지 않는다.", "section": "typography" },
+      { "name": "The Flat-By-Default Rule", "body": "카드·버튼·입력창은 정지 상태에서 그림자가 없다. 그림자는 오직 호버 또는 콘텐츠가 다른 콘텐츠 위로 떠야 할 때만 응답으로 등장한다.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do 액션 버튼 하나에만 Roasted Coffee(#6f4e37)를 쓴다 — 화면에 여러 개의 브랜드색 버튼이 동시에 강조되지 않게 한다.",
+      "Do 상태는 색 배경(10% 불투명도) + 텍스트 라벨을 항상 함께 쓴다.",
+      "Do 터치 타깃은 44px 이상을 기본으로 한다 — 고령/파트타이머 직원이 쓰는 공용 태블릿이다.",
+      "Do 숫자·재고 수량은 굵게(700), 메타데이터는 흐리게(Milk-Coffee Gray) — 굵기 대비로 위계를 만든다.",
+      "Do 재고 수량 스테퍼는 묶음/개별을 나눠 각각 독립적으로 조작 가능하게 한다."
+    ],
+    "donts": [
+      "Don't 엑셀형 재고관리 툴처럼 칸이 빽빽한 표를 만들지 않는다. 리스트 행 사이에는 항상 여백과 구분선을 둔다.",
+      "Don't 화려한 SaaS 대시보드처럼 그라데이션, 히어로 메트릭 카드, 과도한 장식을 쓰지 않는다.",
+      "Don't 장난스러운 소비자 앱처럼 캐주얼하거나 유희적인 인터랙션을 넣지 않는다 — 이건 업무 도구다.",
+      "Don't border-left/border-right 색 스트라이프를 강조 장식으로 쓰지 않는다.",
+      "Don't 그림자를 기본 상태에서 쓰지 않는다. 정지 상태의 카드·버튼·입력창은 평면이어야 한다.",
+      "Don't 텍스트에 그라데이션(background-clip: text)을 쓰지 않는다. 강조는 굵기/크기로만."
+    ]
+  }
+}
