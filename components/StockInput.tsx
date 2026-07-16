@@ -52,30 +52,47 @@ export default function StockInput({
 
   const bundles = Math.floor(valueBase / capacity!);
   const remainder = valueBase - bundles * capacity!;
+  const rowLabelCls = "w-10 shrink-0 text-xs font-medium text-muted";
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <button type="button" onClick={() => onChange(Math.max(0, valueBase - capacity!))} className={btnCls} aria-label="묶음 감소">
-        <Minus size={iconSize} />
-      </button>
-      <input
-        type="number"
-        value={bundles}
-        onChange={(e) => onChange(Math.max(0, Number(e.target.value) || 0) * capacity! + remainder)}
-        className={mainInputCls}
-      />
-      <span className="shrink-0 text-xs text-muted">{bundleUnit}</span>
-      <button type="button" onClick={() => onChange(valueBase + capacity!)} className={btnCls} aria-label="묶음 증가">
-        <Plus size={iconSize} />
-      </button>
-      <span className="text-muted">+</span>
-      <input
-        type="number"
-        value={remainder}
-        onChange={(e) => onChange(bundles * capacity! + Math.max(0, Number(e.target.value) || 0))}
-        className={`${size === "compact" ? "w-12 py-1.5 text-sm" : "w-16 py-1.5 text-sm"} rounded-lg border border-border bg-background text-center text-foreground`}
-      />
-      <span className="shrink-0 text-xs text-muted">{capacityUnit}</span>
+    <div className="flex flex-col items-start gap-1">
+      {/* 묶음 줄 */}
+      <div className="flex items-center gap-2">
+        <span className={rowLabelCls}>묶음</span>
+        <button type="button" onClick={() => onChange(Math.max(0, valueBase - capacity!))} className={btnCls} aria-label="묶음 감소">
+          <Minus size={iconSize} />
+        </button>
+        <input
+          type="number"
+          value={bundles}
+          onChange={(e) => onChange(Math.max(0, Number(e.target.value) || 0) * capacity! + remainder)}
+          className={mainInputCls}
+        />
+        <button type="button" onClick={() => onChange(valueBase + capacity!)} className={btnCls} aria-label="묶음 증가">
+          <Plus size={iconSize} />
+        </button>
+        <span className="shrink-0 text-xs text-muted">{bundleUnit}</span>
+      </div>
+
+      <span className="pl-10 text-xs text-muted">+</span>
+
+      {/* 개별 줄 */}
+      <div className="flex items-center gap-2">
+        <span className={rowLabelCls}>개별</span>
+        <button type="button" onClick={() => onChange(Math.max(0, valueBase - 1))} className={btnCls} aria-label="낱개 감소">
+          <Minus size={iconSize} />
+        </button>
+        <input
+          type="number"
+          value={remainder}
+          onChange={(e) => onChange(bundles * capacity! + Math.max(0, Number(e.target.value) || 0))}
+          className={mainInputCls}
+        />
+        <button type="button" onClick={() => onChange(valueBase + 1)} className={btnCls} aria-label="낱개 증가">
+          <Plus size={iconSize} />
+        </button>
+        <span className="shrink-0 text-xs text-muted">{capacityUnit}</span>
+      </div>
     </div>
   );
 }
