@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { PackageCheck, Truck, Search, Trash2, ShoppingBag } from "lucide-react";
+import { PackageCheck, Truck, Search, Trash2, ShoppingBag, ExternalLink, Phone } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { getOperator } from "@/lib/operator";
 import type { Item, ItemStatus } from "@/lib/types";
@@ -449,6 +449,17 @@ function OrderView({
                       {it.vendor_name || "거래처 미지정"} · 현재 {formatStock(it, it.current_stock)} / 최소 {formatStock(it, it.min_required_stock)}
                     </p>
                   </div>
+                  {(it.order_url || it.order_contact) && (
+                    <a
+                      href={it.order_url || `tel:${it.order_contact}`}
+                      target={it.order_url ? "_blank" : undefined}
+                      rel={it.order_url ? "noopener noreferrer" : undefined}
+                      aria-label={it.order_url ? "구매 링크 열기" : "구매처에 전화"}
+                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-border text-muted hover:bg-background"
+                    >
+                      {it.order_url ? <ExternalLink size={16} /> : <Phone size={16} />}
+                    </a>
+                  )}
                   {inCart ? (
                     <span className="shrink-0 rounded-lg border border-primary/40 px-2.5 py-1.5 text-xs font-semibold text-primary">
                       담김 ✓
