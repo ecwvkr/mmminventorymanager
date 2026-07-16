@@ -62,14 +62,18 @@ export default function SettingsPage() {
 
     supabase
       .from("items")
-      .select("category, current_stock, price")
+      .select("category, current_stock, price, capacity")
       .eq("is_active", true)
       .then(({ data }) => {
         if (!data) return;
         const map = new Map<string, number>();
         let total = 0;
         for (const i of data) {
-          const v = (i.current_stock as number) * (i.price as number);
+          // 재고는 base 단위(g/ml/개)로 저장되지만 price는 구매 단위(병/판 등) 기준이라
+          // capacity로 나눈 단가를 곱해야 함 (capacity 없으면 재고=구매단위이므로 그대로 곱함)
+          const capacity = i.capacity as number | null;
+          const unitPrice = capacity ? (i.price as number) / capacity : (i.price as number);
+          const v = (i.current_stock as number) * unitPrice;
           total += v;
           const k = (i.category as string) || "미분류";
           map.set(k, (map.get(k) ?? 0) + v);
